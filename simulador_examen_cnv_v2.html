@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Examen Idoneidad CNV</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #2a3a55;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --white: #f8fafc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 48px 0 40px;
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-block;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .header p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 12px;
+  }
+
+  /* MENU */
+  #menu-screen { animation: fadeIn 0.4s ease; }
+
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin: 32px 0;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+    transform-origin: bottom;
+  }
+
+  .module-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-2px);
+  }
+
+  .module-card:hover::before { transform: scaleY(1); }
+
+  .module-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .module-card.active::before { transform: scaleY(1); background: var(--accent2); }
+
+  .module-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .module-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.4;
+  }
+
+  .module-count {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .all-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.1));
+    border-color: var(--accent);
+    grid-column: 1 / -1;
+  }
+
+  .all-card .module-title { color: var(--accent); font-size: 16px; }
+
+  /* CONFIG */
+  .config-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+  }
+
+  .config-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .qty-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .qty-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--white);
+    min-width: 50px;
+    text-align: center;
+  }
+
+  .qty-label { color: var(--muted); font-size: 12px; }
+
+  .start-btn {
+    display: block;
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-top: 24px;
+  }
+
+  .start-btn:hover { background: #2563eb; transform: translateY(-1px); }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* QUIZ */
+  #quiz-screen { animation: fadeIn 0.4s ease; }
+
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .quiz-meta { font-size: 12px; color: var(--muted); }
+  .quiz-meta strong { color: var(--accent2); }
+
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--white);
+  }
+
+  .timer-display.warning { color: var(--yellow); animation: pulse 1s infinite; }
+  .timer-display.danger { color: var(--red); animation: pulse 0.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    border-radius: 2px;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+
+  .q-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .q-module-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 2px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    margin-left: 8px;
+  }
+
+  .q-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(15px, 2.5vw, 18px);
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1.55;
+  }
+
+  .options-list {
+    list-style: none;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .option-item:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.08);
+    transform: translateX(3px);
+  }
+
+  .option-letter {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 20px;
+    margin-top: 1px;
+    transition: color 0.15s;
+  }
+
+  .option-item:hover:not(.disabled) .option-letter { color: var(--accent); }
+
+  .option-item.selected {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.12);
+  }
+
+  .option-item.selected .option-letter { color: var(--accent); }
+
+  .option-item.correct {
+    border-color: var(--green);
+    background: rgba(16,185,129,0.12);
+  }
+
+  .option-item.correct .option-letter { color: var(--green); }
+
+  .option-item.wrong {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.1);
+  }
+
+  .option-item.wrong .option-letter { color: var(--red); }
+
+  .option-item.disabled { cursor: default; }
+
+  .option-item.missed {
+    border-color: rgba(16,185,129,0.4);
+    background: rgba(16,185,129,0.05);
+  }
+
+  .feedback-box {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .feedback-box.correct-fb {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: var(--green);
+    display: block;
+  }
+
+  .feedback-box.wrong-fb {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #fca5a5;
+    display: block;
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .nav-btn.primary:hover { background: #2563eb; }
+
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .skip-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 8px;
+    text-decoration: underline;
+    text-align: center;
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    transition: color 0.15s;
+  }
+
+  .skip-btn:hover { color: var(--text); }
+
+  /* RESULTS */
+  #results-screen { animation: fadeIn 0.5s ease; }
+
+  .score-hero {
+    text-align: center;
+    padding: 48px 0 36px;
+  }
+
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .score-circle::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent-color) var(--pct), var(--border) 0);
+  }
+
+  .score-circle-inner {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .score-pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  .score-verdict {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .score-detail {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+
+  .review-section {
+    margin-top: 32px;
+  }
+
+  .review-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .review-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--red);
+  }
+
+  .review-item.ok { border-left-color: var(--green); }
+
+  .review-q {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .review-answers { font-size: 12px; line-height: 1.7; }
+  .review-wrong { color: #fca5a5; }
+  .review-right { color: var(--green); }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .action-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .action-btn.primary:hover { background: #2563eb; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Module selector toggle */
+  .module-card input[type="checkbox"] { display: none; }
+
+  @media (max-width: 600px) {
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .quiz-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .nav-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- MENU -->
+  <div id="menu-screen" class="screen active">
+    <div class="header">
+      <div class="header-badge">Preparación Oficial</div>
+      <h1>Examen de <span>Idoneidad</span><br>CNV</h1>
+      <p>Simulador de práctica · Guía Oficial CNV · 6 Módulos</p>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Seleccioná los módulos</div>
+      <div class="menu-grid" id="module-grid">
+        <div class="module-card all-card" onclick="toggleAll()" id="all-card">
+          <div class="module-num">TODOS LOS MÓDULOS</div>
+          <div class="module-title">Examen Completo</div>
+          <div class="module-count" id="all-count"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">Cantidad de preguntas</div>
+      <div class="config-row">
+        <button class="qty-btn" onclick="changeQty(-5)">−</button>
+        <div class="qty-display" id="qty-display">30</div>
+        <button class="qty-btn" onclick="changeQty(5)">+</button>
+        <div class="qty-label">preguntas por simulacro</div>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn" onclick="startQuiz()">▶ COMENZAR SIMULACRO</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-screen" class="screen">
+    <div class="quiz-header">
+      <div class="quiz-meta">
+        Pregunta <strong id="q-counter">1</strong> de <strong id="q-total">30</strong>
+      </div>
+      <div class="timer-display" id="timer">45:00</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="question-area"></div>
+    <button class="skip-btn" id="skip-btn" onclick="skipQuestion()">saltar pregunta →</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results-screen" class="screen">
+    <div class="score-hero">
+      <div class="score-circle" id="score-circle" style="--pct:0%; --accent-color: var(--accent)">
+        <div class="score-circle-inner">
+          <div class="score-pct" id="score-pct">0%</div>
+          <div class="score-label">RESULTADO</div>
+        </div>
+      </div>
+      <div class="score-verdict" id="score-verdict"></div>
+      <div class="score-detail" id="score-detail"></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-correct" style="color: var(--green)">0</div>
+        <div class="stat-label">CORRECTAS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-wrong" style="color: var(--red)">0</div>
+        <div class="stat-label">INCORRECTAS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-skipped" style="color: var(--yellow)">0</div>
+        <div class="stat-label">SALTADAS</div>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="review-title">Revisión de respuestas incorrectas</div>
+      <div id="review-list"></div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="action-btn" onclick="backToMenu()">← Volver al menú</button>
+      <button class="action-btn primary" onclick="startQuiz()">↺ Repetir simulacro</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===================== QUESTION BANK =====================
+const ALL_QUESTIONS = [
+  { m: 1, q: "¿Cuál es el objetivo principal de la Ley 26.831?", a: "Regular, supervisar y fiscalizar el mercado de capitales", w: ["Garantizar la rentabilidad de los inversores", "Establecer tasas de interés en el mercado", "Supervisar el sistema bancario argentino"] },
+  { m: 1, q: "¿Qué organismo es la autoridad de aplicación de la Ley 26.831?", a: "Comisión Nacional de Valores", w: ["Banco Central de la República Argentina", "Ministerio de Economía", "AFIP"] },
+  { m: 1, q: "¿Cuál de las siguientes NO es una facultad de la Comisión Nacional de Valores?", a: "Garantizar la rentabilidad de los inversores", w: ["Regular y fiscalizar el mercado", "Aplicar sanciones a infractores", "Autorizar la oferta pública de valores"] },
+  { m: 1, q: "¿Qué documento debe presentar una emisora para solicitar la autorización de oferta pública?", a: "Prospecto", w: ["Estatuto social", "Memoria anual", "Balance de apertura"] },
+  { m: 1, q: "¿Cuál es el plazo mínimo para aceptar una OPA una vez publicada?", a: "10 días hábiles", w: ["5 días hábiles", "20 días hábiles", "30 días corridos"] },
+  { m: 1, q: "¿Qué sucede si una oferta pública se realiza sin autorización de la CNV?", a: "Se considera oferta irregular", w: ["Se aplica una multa automática", "El emisor queda inhabilitado permanentemente", "Se anula la operación sin consecuencias"] },
+  { m: 1, q: "¿Qué es la DUVA según la Ley 26.831?", a: "Declaración Unilateral de Adquisición", w: ["Derecho de Usufructo de Valores Accionarios", "Deber de Uniformar la Valoración de Acciones", "Dispositivo Único de Verificación de Activos"] },
+  { m: 1, q: "¿Cuál es la sanción máxima prevista por la Ley 26.831 para incumplimientos graves?", a: "Multa hasta el quíntuplo del beneficio obtenido", w: ["Multa fija de $10.000.000", "Inhabilitación permanente", "Prisión de hasta 5 años"] },
+  { m: 1, q: "¿Qué condición debe cumplir una PyME para ingresar al régimen PyME CNV?", a: "Cumplir con los parámetros establecidos por la SEPyME", w: ["Tener más de 50 empleados", "Estar listada en otro mercado", "Tener 3 años de antigüedad mínima"] },
+  { m: 1, q: "¿Qué significa 'oferta pública' según la Ley 26.831?", a: "Una oferta dirigida al público en general o a sectores indeterminados", w: ["Una oferta exclusiva para inversores calificados", "Una licitación estatal de valores", "Una oferta efectuada sólo por entidades financieras"] },
+  { m: 1, q: "¿Cuál es la función del Tribunal Arbitral según la Ley 26.831?", a: "Resolver controversias entre participantes del mercado", w: ["Aplicar sanciones penales", "Fijar las tasas de rendimiento", "Auditar a los emisores"] },
+  { m: 1, q: "¿Qué principio debe respetarse en toda OPA?", a: "Igualdad de trato y transparencia", w: ["Confidencialidad absoluta", "Libre disponibilidad del precio", "Autonomía del oferente"] },
+  { m: 1, q: "¿Qué plazo tiene la CNV para resolver la solicitud de autorización de una OPA?", a: "20 días hábiles", w: ["5 días hábiles", "10 días hábiles", "30 días corridos"] },
+  { m: 1, q: "¿Qué sucede si el oferente incumple la obligación de formular una OPA?", a: "La CNV dispone la subasta de las participaciones adquiridas", w: ["Se anula la compra automáticamente", "Se aplica sólo una multa", "El oferente queda inhabilitado para operar"] },
+  { m: 1, q: "¿Qué norma regula las Obligaciones Negociables en Argentina?", a: "Ley 23.576", w: ["Ley 26.831", "Ley 19.550", "Ley 24.467"] },
+  { m: 1, q: "¿Qué plazo tiene el oferente para publicar el prospecto de una OPA luego de su aprobación?", a: "5 días hábiles", w: ["10 días hábiles", "20 días hábiles", "3 días corridos"] },
+  { m: 1, q: "Al alcanzar el 95% de las acciones de una sociedad admitida al régimen de oferta pública, ante intimación del minoritario, corresponde:", a: "Que la sociedad controlante lance una Declaración Unilateral de Voluntad de Adquisición (DUVA)", w: ["Que se disuelva la sociedad", "Que la CNV intervenga la sociedad", "Que el minoritario sea excluido automáticamente"] },
+  { m: 1, q: "¿Qué se entiende por 'actuación concertada' según la Ley de Mercado de Capitales?", a: "Actuación coordinada de dos o más personas para cooperar en la adquisición, tenencia o disposición de acciones", w: ["Toda comunicación entre accionistas", "La actuación simultánea de compradores en una OPA", "El acuerdo de sindicatos de accionistas para pagar dividendos"] },
+  { m: 1, q: "Una vez en el régimen de Oferta Pública por acciones:", a: "No pueden emitirse acciones ordinarias con voto privilegiado, salvo en casos de ajuste de capital", w: ["Se deben publicar balances mensuales", "El capital social no puede modificarse", "Las acciones preferidas pierden todos sus derechos"] },
+  { m: 1, q: "La colocación primaria de valores negociables deberá efectuarse mediante:", a: "Formación de libro o subasta o licitación pública", w: ["Acuerdo privado entre partes", "Mesa de operaciones del BCRA", "Subasta exclusiva de la CNV"] },
+  { m: 1, q: "¿Qué sucede si una emisora decide retirarse del régimen de oferta pública?", a: "Debe formular una OPA por el total de acciones", w: ["Sólo debe avisar a la CNV con 30 días de anticipación", "Puede retirarse libremente sin requisitos especiales", "Debe cancelar todas sus deudas previamente"] },
+  { m: 1, q: "¿Qué es un CEDEAR?", a: "Un Certificado de Depósito de Valores Extranjeros que se negocia en el país", w: ["Un certificado de depósito bancario a plazo fijo", "Una acción preferida emitida por el Estado", "Un bono del tesoro en moneda extranjera"] },
+  { m: 1, q: "Los valores negociables comprendidos en el régimen PyME CNV:", a: "Sólo podrán ser adquiridos por los inversores calificados que se encuentren dentro de las categorías establecidas en las Normas CNV", w: ["Pueden ser adquiridos por cualquier persona", "No requieren autorización de la CNV", "Deben estar avalados por el Estado"] },
+  { m: 1, q: "¿Qué artículo del Código Civil y Comercial define la personalidad jurídica?", a: "Art. 146", w: ["Art. 272", "Art. 280", "Art. 255"] },
+  { m: 1, q: "¿Cuál es el plazo que tiene la emisora para tratar en asamblea la capitalización de aportes irrevocables?", a: "6 meses", w: ["3 meses", "12 meses", "2 años"] },
+  { m: 2, q: "¿Qué ley regula los Fondos Comunes de Inversión en Argentina?", a: "Ley 24.083", w: ["Ley 26.831", "Ley 23.576", "Ley 19.550"] },
+  { m: 2, q: "¿Qué es un Fondo Común de Inversión (FCI)?", a: "Un patrimonio indiviso integrado por aportes de múltiples inversores para invertir en valores", w: ["Una sociedad anónima que emite acciones", "Un depósito bancario colectivo", "Un fideicomiso de garantía"] },
+  { m: 2, q: "¿Cuáles son los órganos que integran un Fondo Común de Inversión?", a: "Sociedad gerente y sociedad depositaria", w: ["Directorio y sindicatura", "Comité de inversión y auditores", "Gerente general y banco custodio"] },
+  { m: 2, q: "¿Cuál es la función de la sociedad gerente en un FCI?", a: "Administrar el patrimonio del fondo e invertir los recursos", w: ["Custodiar físicamente los valores", "Auditar las operaciones del fondo", "Aprobar los estados contables"] },
+  { m: 2, q: "¿Cuál es la función de la sociedad depositaria en un FCI?", a: "Custodiar los activos del fondo y controlar la actuación de la gerente", w: ["Gestionar las inversiones del fondo", "Distribuir utilidades a los cuotapartistas", "Emitir cuotapartes en el mercado"] },
+  { m: 2, q: "¿Qué es una cuotaparte de un FCI?", a: "La unidad de participación del inversor en el patrimonio del fondo", w: ["Una acción emitida por la gerente", "Un bono emitido por la depositaria", "Un certificado de depósito bancario"] },
+  { m: 2, q: "¿Qué tipo de FCI invierte principalmente en activos de corto plazo y alta liquidez?", a: "FCI de mercado de dinero", w: ["FCI de renta variable", "FCI cerrado de infraestructura", "FCI de renta mixta"] },
+  { m: 2, q: "¿Qué caracteriza a un FCI cerrado?", a: "Su patrimonio es fijo y las cuotapartes se negocian en mercados secundarios", w: ["Admite rescates diarios", "No puede invertir en acciones", "Está prohibido para inversores minoristas"] },
+  { m: 2, q: "¿Qué es un fideicomiso financiero?", a: "Un fideicomiso que emite títulos de deuda o certificados de participación para obtener financiamiento", w: ["Un contrato entre dos partes para administrar bienes sin emitir valores", "Un depósito a plazo fijo con garantía del Estado", "Una sociedad de propósito especial sin emisión de valores"] },
+  { m: 2, q: "¿Cuáles son las partes principales de un fideicomiso?", a: "Fiduciante, fiduciario y beneficiario", w: ["Emisor, colocador e inversor", "Gerente, depositaria y cuotapartista", "Accionista, directorio y síndico"] },
+  { m: 2, q: "¿Qué norma establece la obligación de la sociedad gerente de actuar con diligencia y lealtad?", a: "Ley 24.083 y Normas CNV", w: ["Sólo el Código Civil", "Ley 19.550", "Carta Orgánica del BCRA"] },
+  { m: 2, q: "¿Qué sucede con los activos de un FCI si la sociedad gerente quiebra?", a: "Los activos del fondo son inembargables por los acreedores de la gerente", w: ["Los activos se distribuyen entre los acreedores", "Los activos pasan al Estado", "Los activos se transfieren a la depositaria automáticamente"] },
+  { m: 2, q: "¿Qué tipo de inversores pueden rescatar cuotapartes de un FCI abierto?", a: "Cualquier inversor que haya suscripto cuotapartes", w: ["Sólo inversores calificados", "Sólo la sociedad gerente", "Sólo bancos e instituciones financieras"] },
+  { m: 2, q: "¿Cuál es el reglamento de gestión de un FCI?", a: "El documento que establece los objetivos, política de inversión y condiciones del fondo", w: ["El estatuto de la sociedad gerente", "El contrato con la sociedad depositaria", "El prospecto de colocación del fondo"] },
+  { m: 2, q: "¿Qué obliga la Ley 24.083 respecto a la información del FCI?", a: "Publicar el valor de la cuotaparte y el patrimonio del fondo diariamente", w: ["Publicar balances trimestrales únicamente", "Informar sólo ante requerimiento de la CNV", "Publicar la composición de la cartera anualmente"] },
+  { m: 2, q: "¿Qué son los Fondos Comunes de Inversión Abiertos de Infraestructura?", a: "FCI cerrados que invierten en proyectos de infraestructura, creados por la Ley 27.440", w: ["Fondos municipales para obras públicas", "FCI abiertos que invierten en bonos del estado", "Fondos de pensión regulados por ANSES"] },
+  { m: 2, q: "En un fideicomiso financiero, ¿quién emite los títulos de deuda?", a: "El fiduciario", w: ["El fiduciante", "El beneficiario", "La CNV directamente"] },
+  { m: 2, q: "¿Cuál es la diferencia entre un FCI de renta fija y uno de renta variable?", a: "El de renta fija invierte principalmente en bonos; el de renta variable, en acciones", w: ["El de renta fija tiene mayores rendimientos garantizados", "El de renta variable sólo acepta inversores institucionales", "No hay diferencias legales entre ambos"] },
+  { m: 2, q: "¿Qué ley creó los Fondos de Inversión Directa (FID) para PyMEs?", a: "Ley 27.440 de Financiamiento Productivo", w: ["Ley 24.083", "Ley 26.831", "Ley 23.576"] },
+  { m: 3, q: "¿Cuál es el objetivo del principio de transparencia en el mercado de capitales?", a: "Asegurar información veraz, suficiente y oportuna para la toma de decisiones", w: ["Garantizar rentabilidad mínima a los inversores", "Limitar el acceso al mercado a grandes inversores", "Reducir los costos de transacción"] },
+  { m: 3, q: "¿Cuál de las siguientes conductas es contraria a la transparencia?", a: "Difundir información falsa o engañosa sobre valores negociables", w: ["Publicar un prospecto detallado", "Informar hechos relevantes en la Autopista de la Información Financiera", "Contratar un auditor externo independiente"] },
+  { m: 3, q: "¿Qué plazo tiene una emisora para informar un hecho relevante?", a: "24 horas", w: ["5 días hábiles", "10 días hábiles", "1 mes"] },
+  { m: 3, q: "¿Qué órgano debe designar un Responsable de Relaciones con el Público Inversor?", a: "Órgano de administración de la emisora", w: ["La CNV directamente", "Los accionistas en asamblea ordinaria", "El síndico de la sociedad"] },
+  { m: 3, q: "¿Dónde se pueden presentar denuncias por incumplimiento de normas de transparencia?", a: "Ante la Comisión Nacional de Valores", w: ["Ante el juez civil competente", "Ante la AFIP", "Ante el Banco Central"] },
+  { m: 3, q: "¿Qué plazo tiene la emisora para publicar sus estados contables anuales?", a: "60 días corridos", w: ["30 días hábiles", "90 días corridos", "6 meses"] },
+  { m: 3, q: "¿Qué norma regula el gobierno corporativo en emisoras?", a: "Normas CNV Título XII", w: ["Normas CNV Título IV", "Ley 19.550", "Normas CNV Título XVI"] },
+  { m: 3, q: "¿Qué norma establece el deber de informar conflictos de interés?", a: "Ley General de Sociedades, art. 272", w: ["Ley 26.831, art. 19", "Código Civil, art. 146", "Normas CNV Título XIII"] },
+  { m: 3, q: "Las denuncias por ante la CNV:", a: "Pueden formularse de manera anónima y/o con individualización de quien denuncia", w: ["Sólo pueden formularse por escrito con patrocinio letrado", "Deben ser siempre anónimas", "Sólo pueden ser presentadas por inversores calificados"] },
+  { m: 3, q: "¿Qué conductas son consideradas 'contrarias a la transparencia'?", a: "El abuso de información privilegiada, manipulación y engaño en el mercado", w: ["La compra de acciones en mercados secundarios", "La emisión de obligaciones negociables sin prospecto", "La colocación privada de valores a más de 35 inversores"] },
+  { m: 3, q: "¿Qué se considera 'información privilegiada'?", a: "Información no divulgada públicamente, apta para afectar el precio de valores negociables", w: ["Cualquier dato financiero publicado en balances", "Información exclusiva de directores de la CNV", "Datos del BCRA sobre tasas de interés"] },
+  { m: 3, q: "¿Qué se consideran supuestos de engaño al mercado?", a: "Transacciones para crear la apariencia falsa de oferta y demanda activa", w: ["Compras a precios de mercado", "Emisiones de obligaciones negociables a tasa fija", "La formación de libro en una OPA"] },
+  { m: 3, q: "Respecto a quien formula una denuncia ante la CNV:", a: "No es parte del proceso sancionador y no puede tomar vista del expediente", w: ["Puede actuar como querellante en el sumario", "Debe estar presente en todas las audiencias", "Recibirá una parte de la multa aplicada"] },
+  { m: 3, q: "Los domicilios especiales constituidos por directores ante la CNV tienen validez:", a: "Hasta dos (2) años después que dichos directores cesan en sus cargos", w: ["Hasta que el director renuncie formalmente", "Por tiempo ilimitado", "Sólo durante el mandato del director"] },
+  { m: 3, q: "¿Qué debe hacer una emisora respecto al deber de lealtad de sus directores?", a: "Hacer prevalecer el interés social de la emisora y el interés común de todos sus socios", w: ["Priorizar los intereses del accionista mayoritario", "Seguir las instrucciones de la CNV antes que el interés social", "Priorizar el pago de dividendos por sobre todo"] },
+  { m: 4, q: "¿Cuál es la característica principal de una obligación negociable (ON)?", a: "Es un instrumento de deuda que da derecho al cobro de capital e intereses", w: ["Otorga derecho a participar en las utilidades de la empresa", "Da derecho a voto en la asamblea de accionistas", "Es una acción preferida sin derecho a dividendo"] },
+  { m: 4, q: "¿Qué norma regula las Obligaciones Negociables?", a: "Ley 23.576", w: ["Ley 26.831", "Ley 19.550", "Ley 24.083"] },
+  { m: 4, q: "¿Qué tipo de ON permite la conversión en acciones?", a: "Obligaciones negociables convertibles", w: ["ON subordinadas", "ON simples", "ON en default"] },
+  { m: 4, q: "¿Qué es una Letra Hipotecaria?", a: "Un valor negociable emitido por entidades financieras con garantía hipotecaria", w: ["Un bono del Estado con garantía del BCRA", "Una acción preferida de entidades bancarias", "Un certificado de depósito con garantía real"] },
+  { m: 4, q: "¿Qué diferencia hay entre el mercado primario y el secundario?", a: "En el primario se emiten y colocan valores por primera vez; en el secundario se negocian entre inversores", w: ["En el primario operan sólo inversores calificados", "El secundario está prohibido para emisoras", "No hay diferencias legales entre ambos"] },
+  { m: 4, q: "¿Qué son los Valores Fiduciarios?", a: "Títulos emitidos por el fiduciario de un fideicomiso financiero", w: ["Acciones emitidas por fideicomisos de garantía", "Bonos emitidos directamente por el Estado", "Certificados de participación en FCI cerrados"] },
+  { m: 4, q: "¿Qué es el valor nominal de un bono?", a: "El monto de capital que el emisor se compromete a pagar al vencimiento", w: ["El precio de mercado del bono", "La suma de todos los intereses a pagar", "El valor contable en los estados financieros"] },
+  { m: 4, q: "¿Qué mide la duration de un bono?", a: "La sensibilidad del precio del bono ante cambios en la tasa de interés", w: ["La tasa interna de retorno", "El tiempo hasta el primer pago de intereses", "El spread crediticio del emisor"] },
+  { m: 4, q: "¿Qué es la tasa interna de retorno (TIR) de un bono?", a: "La tasa que iguala el precio del bono con el valor presente de sus flujos futuros", w: ["La tasa de cupón del bono", "La tasa de inflación esperada", "La tasa de política monetaria del BCRA"] },
+  { m: 4, q: "¿Qué es el cupón de una ON?", a: "El pago periódico de intereses que realiza el emisor", w: ["El valor nominal del bono", "La garantía otorgada por el emisor", "El vencimiento del instrumento"] },
+  { m: 4, q: "¿Qué es un título público?", a: "Un instrumento de deuda emitido por el Estado Nacional, provincial o municipal", w: ["Una acción emitida por empresas estatales", "Un certificado de participación en FCI del Estado", "Un préstamo del BCRA al Tesoro"] },
+  { m: 4, q: "¿Qué es un Cheque de Pago Diferido (CPD)?", a: "Un cheque librado con una fecha de pago futura que puede negociarse en mercados de capitales", w: ["Un depósito a plazo fijo del banco", "Un pagaré sin fecha de vencimiento", "Una letra de cambio a 90 días"] },
+  { m: 4, q: "¿Qué es una Factura de Crédito Electrónica (FCE)?", a: "Una factura de venta que puede negociarse en mercados de capitales como instrumento de financiamiento PyME", w: ["Una orden de pago electrónico bancario", "Un comprobante fiscal digital sin valor negociable", "Un título emitido exclusivamente por el Estado"] },
+  { m: 4, q: "¿Qué tipo de garantía respalda a las ON emitidas por PyMEs Garantizadas?", a: "El aval de una Sociedad de Garantía Recíproca (SGR)", w: ["La garantía del Estado Nacional", "La prenda sobre activos de la emisora", "El seguro de crédito a la exportación"] },
+  { m: 4, q: "¿Cuáles son los principales riesgos de una obligación negociable?", a: "Riesgo de crédito (default), riesgo de mercado y riesgo de liquidez", w: ["Sólo el riesgo de inflación", "Riesgo cambiario exclusivamente", "Riesgo regulatorio de la CNV"] },
+  { m: 5, q: "¿Cuál es la función principal de un agente de negociación?", a: "Intermediar en la compra y venta de valores en mercados autorizados", w: ["Custodiar valores negociables de clientes", "Calificar el riesgo de los emisores", "Administrar fideicomisos financieros"] },
+  { m: 5, q: "¿Qué agente se encarga de la compensación y liquidación de operaciones?", a: "Cámara compensadora", w: ["Agente de negociación", "Agente productor", "Agente de custodia"] },
+  { m: 5, q: "¿Cuál es una limitación de los agentes de negociación?", a: "No pueden asesorar sobre inversiones sin estar registrados ante la CNV", w: ["No pueden operar valores de renta fija", "No pueden actuar como depositantes", "No pueden operar en nombre propio"] },
+  { m: 5, q: "¿Qué es un contrato de futuros?", a: "Un acuerdo para comprar o vender un activo en fecha futura a precio pactado", w: ["Un acuerdo para comprar un activo al precio actual", "Un seguro contra la variación de precios sin obligación de entrega", "Una opción de compra que puede o no ejercerse"] },
+  { m: 5, q: "¿Qué representa la prima en una opción?", a: "El costo que paga el comprador por el derecho (no obligación) de comprar o vender", w: ["La ganancia garantizada del vendedor", "El margen de garantía del contrato", "El valor intrínseco del activo subyacente"] },
+  { m: 5, q: "¿Cuál es el objetivo de un swap de tasa de interés?", a: "Intercambiar flujos de pagos a tasa fija por flujos a tasa variable", w: ["Comprar y vender divisas al mismo tiempo", "Obtener financiamiento del BCRA", "Cubrir el riesgo de inflación doméstica"] },
+  { m: 5, q: "¿Qué función cumple la cámara compensadora en los mercados?", a: "Garantizar la liquidación de operaciones actuando como contraparte central", w: ["Fijar los precios de los valores negociables", "Autorizar la oferta pública de nuevos valores", "Auditar las operaciones de los agentes"] },
+  { m: 5, q: "¿Qué significa 'prioridad precio-tiempo' en los mercados?", a: "Se ejecuta primero la orden con mejor precio y, en igualdad, por orden de ingreso", w: ["Las órdenes más grandes tienen prioridad siempre", "Los inversores institucionales tienen prioridad", "La prioridad la define el agente de negociación"] },
+  { m: 5, q: "¿Qué es una venta en corto (short selling)?", a: "Venta de valores obtenidos a través de préstamo concertado en la misma jornada de negociación", w: ["Venta de acciones propias con descuento", "Venta a futuro de activos no financieros", "Liquidación anticipada de una caución"] },
+  { m: 5, q: "En la fecha de concertación de una operación de caución, ¿qué recibe el tomador de fondos?", a: "El valor aforado de la garantía menos los intereses", w: ["El valor nominal de los títulos entregados", "El valor aforado más los intereses", "El precio de mercado de los valores"] },
+  { m: 5, q: "¿Qué diferencia principal existe entre un pase y una caución?", a: "En el pase el tomador pierde la propiedad de los valores; en la caución, no", w: ["En el pase los plazos son más cortos", "En la caución las tasas son más altas", "No hay diferencias relevantes entre ambas operaciones"] },
+  { m: 5, q: "¿Qué ley introdujo las plataformas de financiamiento colectivo (crowdfunding)?", a: "Ley 27.440 de Financiamiento Productivo", w: ["Ley 26.831", "Ley 24.083", "Ley 23.576"] },
+  { m: 5, q: "Los vendedores de opciones Call están obligados a:", a: "Vender el activo subyacente si el comprador ejerce la opción", w: ["Comprar el activo subyacente si el comprador ejerce", "Entregar la prima al momento del ejercicio", "No hacer nada si la opción no se ejerce"] },
+  { m: 5, q: "¿Cuál es la función de los márgenes de garantía en mercados de futuros?", a: "Sirven como garantía de cumplimiento ante posibles pérdidas", w: ["Son el costo de la prima del contrato", "Representan el beneficio mínimo garantizado", "Son el precio de compra acordado"] },
+  { m: 5, q: "¿Qué obligaciones tienen los Agentes respecto a las órdenes de clientes?", a: "Registrar todas las órdenes y explicitar comisiones en la documentación de respaldo", w: ["Ejecutar sólo órdenes de inversores calificados", "Reportar todas las órdenes a la AFIP antes de ejecutarlas", "Rechazar órdenes que superen el patrimonio del cliente"] },
+  { m: 5, q: "¿Qué son los Agentes Productores (AP)?", a: "Agentes que realizan actividades de difusión y captación de clientes, vinculados a otro agente habilitado", w: ["Agentes que sólo operan con valores de renta variable", "Agentes autorizados a custodiar valores de clientes", "Agentes que emiten valores propios en el mercado"] },
+  { m: 6, q: "¿Qué organismo regula la prevención del lavado de activos en Argentina?", a: "Unidad de Información Financiera (UIF)", w: ["Banco Central de la República Argentina", "Comisión Nacional de Valores", "AFIP"] },
+  { m: 6, q: "¿Qué es el lavado de activos?", a: "El proceso de dar apariencia lícita a fondos de origen ilícito", w: ["La evasión de impuestos mediante cuentas offshore", "El uso de información privilegiada para operar", "La manipulación artificial de precios bursátiles"] },
+  { m: 6, q: "¿Qué es el financiamiento del terrorismo?", a: "La provisión de fondos para actividades terroristas, independientemente del origen lícito o ilícito", w: ["El lavado de fondos provenientes de actividades ilícitas", "La evasión fiscal en el sector financiero", "El uso de criptomonedas para operaciones ilegales"] },
+  { m: 6, q: "¿Quiénes son sujetos obligados ante la UIF en el mercado de capitales?", a: "Los agentes registrados ante la CNV, entre otros", w: ["Sólo las sociedades emisoras de acciones", "Sólo los inversores institucionales", "Sólo las entidades financieras bancarias"] },
+  { m: 6, q: "¿Qué es el Reporte de Operación Sospechosa (ROS)?", a: "Una comunicación que realizan los sujetos obligados ante la UIF cuando detectan operaciones inusuales o sospechosas", w: ["Un informe mensual obligatorio para todos los inversores", "Una declaración jurada ante la AFIP", "Un reporte de auditoría interna de los agentes"] },
+  { m: 6, q: "¿Qué es la política de 'Conozca a su Cliente' (KYC)?", a: "El conjunto de procedimientos para identificar, verificar y conocer el perfil de los clientes", w: ["La política de confidencialidad del agente hacia el cliente", "El proceso de evaluación crediticia del emisor", "El reglamento de conducta profesional del agente"] },
+  { m: 6, q: "¿Qué información debe incluir el perfil del cliente en el KYC?", a: "Datos de identidad, actividad económica, origen de fondos y perfil de riesgo", w: ["Sólo documento de identidad y domicilio", "Únicamente estados de cuenta bancarios", "Sólo el número de CUIT y código de agente"] },
+  { m: 6, q: "¿Qué sanciones puede imponer la UIF?", a: "Multas, apercibimientos e inhabilitaciones", w: ["Sólo multas económicas", "Sólo inhabilitaciones temporales", "Sanciones penales de prisión directamente"] },
+  { m: 6, q: "¿Qué significa 'Debida Diligencia Reforzada'?", a: "La aplicación de medidas adicionales de control para clientes o transacciones de mayor riesgo", w: ["El proceso estándar de apertura de cuenta", "La verificación mensual de todos los clientes", "La auditoría interna obligatoria de los agentes"] },
+  { m: 6, q: "¿Qué es una Persona Políticamente Expuesta (PEP)?", a: "Una persona que desempeña o desempeñó funciones públicas prominentes en los últimos 5 años", w: ["Todo empleado de una entidad financiera", "Un inversor con cartera superior a U$S 100.000", "Un director de empresa que cotiza en bolsa"] },
+  { m: 6, q: "¿Cuál es la obligación de los sujetos obligados frente a la UIF respecto al secreto?", a: "El reporte a la UIF no implica violación del secreto profesional ni bancario", w: ["Siempre deben informar al cliente antes de reportar", "El secreto profesional prevalece sobre la obligación de reporte", "Sólo pueden reportar con autorización judicial previa"] },
+  { m: 6, q: "¿Qué plazo tienen los sujetos obligados para reportar una operación sospechosa a la UIF?", a: "30 días corridos desde que calificaron la operación como sospechosa", w: ["24 horas de detectada la operación", "5 días hábiles de la operación", "6 meses desde que ocurrió la transacción"] },
+  { m: 6, q: "¿Qué es el beneficiario final en el contexto de AML (Anti-Money Laundering)?", a: "La persona física que en última instancia posee o controla a una persona jurídica o instrumento legal", w: ["El último destinatario de dividendos de una SA", "El director de mayor jerarquía de la sociedad", "El síndico de la sociedad fiscalizada por la CNV"] },
+  { m: 6, q: "¿Cuál de los siguientes es un indicador de operación sospechosa?", a: "Transacciones de gran volumen sin justificación económica aparente", w: ["Inversión diversificada en distintos instrumentos", "Compra de acciones de empresas conocidas", "Apertura de cuenta con todos los documentos en orden"] },
+  { m: 6, q: "¿Qué sistema de gestión de riesgo deben implementar los sujetos obligados para prevenir el lavado?", a: "Un sistema de prevención basado en la evaluación y gestión del riesgo de cada cliente y operación", w: ["Un sistema de auditoría externa anual", "Un sistema de control de calidad ISO", "Un sistema de gestión de compliance únicamente para PEPs"] },
+  { m: 1, q: "La subasta americana es un mecanismo donde:", a: "Distribuye los títulos de acuerdo al precio (acciones) o rendimientos (bonos) ofertados por cada inversor. Las ofertas se ordenan desde la mejor propuesta y se van sumando las cantidades hasta alcanzar el monto de la emisión", w: ["Los títulos se ordenan por precio o rendimiento y se fija valor de \"corte\" al completar la emisión que es percibido por todos los oferentes que integraron la oferta", "Asignar los títulos por orden de ingreso de las ofertas hasta alcanzar el monto a colocar", "No es un mecanismo de subasta, es una categoría de Futuros"] },
+  { m: 1, q: "El Índice Merval es un", a: "Índice de liquidez integrado por las empresas que completan el 80% del volumen total operado", w: ["Índice por capitalización integrado por las 25 empresas más grandes con oferta pública", "Índice de empresas premium determinado por el Directorio del Mercado de Valores de Buenos Aires SA", "Índice integrado por los principales bonos del Estado Nacional"] },
+  { m: 1, q: "Cuáles son los cambios en la Ley Nº 26.281 referida a Calificadoras", a: "Habilitación de Universidades Nacionales", w: ["Hegemonía de entidades calificadoras privadas", "Categorías de agentes genéricas", "Cumplimiento de la normativa de Gobierno Societario"] },
+  { m: 1, q: "Cuál de los siguientes limites referido a los Mercados es correcta", a: "Todas las anteriores", w: ["Ningún accionista puede poseer más del 20% del capital social y quien tenga más del 2% debe informar cualquier variación", "La mayoría de sus Directores deben reunir la condición de independientes", "Deben hacer oferta pública de sus acciones"] },
+  { m: 1, q: "El concepto de desmutualización que promueve la Ley 26.831 permite", a: "Que todo A.N que cumpla los requisitos del Mercado pueda obtener una membresía para operar", w: ["Que los mercados puedan emitir más acciones para aumentar la cantidad de A.N.", "Reduce la cantidad de Sociedades de Bolsa y las convierte en Agentes Productores.", "El ingreso de mutuales y cooperativas en los mercados tradicionales (Merval, Mervalores, etc)."] },
+  { m: 1, q: "Una ALyC tiene permitido:", a: "Todas las opciones anteriores están prohibidas", w: ["Dirigir acciones promocionales hacia los clientes de los AN con los que tengan suscripto un convenio para la liquidación y compensación", "Disponer de los fondos y valores negociables de sus clientes propios, sin previa autorización de ellos", "Realizar operaciones que constituyan bajo cualquier forma la concesión de financiamiento, préstamo o adelantos, a clientes propios, a AN o a los clientes de AN, incluso a través de la cesión de derechos"] },
+  { m: 1, q: "Las Cámaras Compensadoras tienen las siguientes obligaciones:", a: "Destinar a un Fondo de Garantía el 50% al menos de sus utilidades anuales", w: ["Liquidar operaciones con el Banco Central", "Administrar el efectivo de los clientes bajo un Fideicomiso de garantía", "Liquidar las operaciones únicamente del Merval"] },
+  { m: 1, q: "Un Agente de Calificación de Riesgo (ACR) tiene como límite:", a: "El plazo máximo de duración de cada convenio será de 4 años. Cumplido el mismo, el ACR no puede volver a emitir un informe de calificación de riesgo de la entidad contratante durante un plazo mínimo de 4 años", w: ["Calificar a un mismo emisor por hasta 6 años con opción a renovación por otros dos años", "Calificar a un mismo emisor por hasta 2 años con opción de renovación por otros dos años", "Calificar a un mismo emisor por hasta 3 años con opción a renovación por otros dos años"] },
+  { m: 1, q: "Los Agentes Productores pueden:", a: "Captar clientes para su posterior alta por parte del Agente de Negociación con quien tenga firmado un contrato", w: ["Actuar como representante de un Agente de Negociación", "Utilizar la denominación de Agente de Negociación como propia", "Pueden constituir domicilio en el Agente de Negociación con quien tenga firmado un contrato"] },
+  { m: 1, q: "Incompatibilidades entre distintas categorías de Agentes. Marque la  opción correcta:", a: "Agente Custodia de FCI y Agente de Negociación", w: ["Agente de Negociación y ALyC", "Agente de Productores y Agente Asesor", "Agente Administrador de FCI y Agente de Negociación"] },
+  { m: 1, q: "Cuál de las siguientes funciones autorizadas a la Bolsa de Comercio es Correcta:", a: "Funcionamiento como Agente de Calificación de Riesgo", w: ["Autorización de Oferta Pública de acciones", "Auditor de empresas cotizantes", "Funcionamiento como ALyC"] },
+  { m: 1, q: "Las principales Camaras Compensadoras de la Argentina son", a: "Argentina Clearing y Rofex", w: ["Merval y Rofex", "MAE y Merval", "Argentina Clearing, Argenclear (Maeclear) y Merval"] },
+  { m: 1, q: "La CNV NO tiene la siguiente función:", a: "Sancionar a los Bancos Comerciales", w: ["Autorizar la oferta pública de Títulos Valores", "Regular, fiscalizar y controlar a todos los Agentes participantes del Mercado de Capitales", "Establecer Normas que deben cumplir los emisores de Títulos Valores"] },
+  { m: 1, q: "La Comisión Nacional de Valores tiene las siguientes facultades:", a: "A y B", w: ["Autorización para actuar de agentes del mercado", "Poder de policía", "Controlar la función de los bancos comerciales"] },
+  { m: 1, q: "La oferta pública irregular puede derivar en:", a: "Sanciones administrativas, responsabilidad civil y penal", w: ["Sanciones administrativas", "Responsabilidad penal", "Multa"] },
+  { m: 1, q: "Los mercados donde se negocian los valores son:", a: "Entidades autorizadas por la CNV", w: ["Entidades autorreguladas", "Entidades autárquicas", "Entidades autorizadas por la Bolsa de Comercio"] },
+  { m: 1, q: "Los Agentes de mercado deben actuar frente a la gerencia de:", a: "Agentes y mercados", w: ["Servicios centrales", "Varía según las actividades que realicen", "Depende del Mercado en el cual operen"] },
+  { m: 1, q: "Cuál de los siguientes NO es un requisito para operar como agente:", a: "Haber desempeñado cargo en agentes previamente", w: ["Idoneidad", "Registro ante la Comisión Nacional de Valores", "Todos los anteriores"] },
+  { m: 1, q: "¿Cuáles de los siguientes agentes NO pueden realizar colocaciones primarias?", a: "Agentes Asesor de Mercado de Capitales", w: ["Agente de Negociación", "Agente de Colocación y Distribución de FCI", "Todos los anteriores"] },
+  { m: 1, q: "Marcar un principio fundamental de la operatoria de los agentes:", a: "Ley de Oferta Publica", w: ["Régimen informativo", "Régimen de participación accionaria", "Régimen penal cambiario"] },
+  { m: 1, q: "Los Agentes de Negociación NO pueden:", a: "Recibir cobros de clientes", w: ["Realizar colocaciones primarias", "Registrar operaciones de negociación secundaria", "Todas las anteriores"] },
+  { m: 1, q: "Los Agentes de Liquidación y Compensación pueden:", a: "Contratar con Agente de Negociación", w: ["Disponer de fondos de sus clientes propios", "Conceder financiamiento", "Todas las anteriores"] },
+  { m: 1, q: "El Agente Productor puede:", a: "Prestar asesoramiento sobre inversiones", w: ["Compartir domicilio con el Agente de Negociación y Agente de Liquidación y Compensación", "Custodiar valores en nombre de clientes", "Contratar ALyC"] },
+  { m: 4, q: "Defina curvas de rendimiento", a: "Son combinaciones de TIR y duration (o modified duration) de diferentes bonos con misma o similar calificación de riesgo", w: ["Son combinaciones de rendimiento corriente y vencimiento para distintos bonos", "Son combinaciones de TIR y vencimiento para bonos con distintas calificaciones de riesgo", "Son combinaciones de precios de distintos bonos con misma rentabilidad"] },
+  { m: 4, q: "Ventajas para los inversores que operan cheques de pago diferido", a: "Todas las anteriores", w: ["Existencia de un mercado secundario que permite la venta de un cheque comprado", "Segmento Avalado con riesgo muy bajo gracias a la SGR", "Segmento Patrocinado con varias empresas autorizadas"] },
+  { m: 4, q: "El bono puede estar sobre o bajo la par, pero a medida que pasa el tiempo irá convergiendo al valor par", a: "En todos los casos", w: ["Solo en el caso de un bono bullet", "Solo en el caso de un bono bullet cupón variable", "Si la duration es muy elevada"] },
+  { m: 4, q: "Se puede dolarizar una cartera", a: "Ninguna de las anteriores", w: ["Comprando bonos nominados en dólares", "Comprando bonos ajustables por dólar linked", "Invirtiendo en FCI que contengan activos nominados en USD"] },
+  { m: 4, q: "Si usted posee una cartera de bonos y espera que en el corto plazo suban las tasas, ¿cuál sería su recomendación en términos de la duration de la cartera?", a: "Disminuirla", w: ["Mantenerla sin cambios", "Aumentarla", "Es indistinto"] },
+  { m: 4, q: "Los Covenants se definen como", a: "Indicadores definidos en el prospecto de emisión para garantizar a los acreedores que el emisor operará de una manera financieramente prudente", w: ["Indicadores de cobertura para el emisor", "Indicadores de cobertura para el acreedor", "Indicadores establecidos por la CNV"] },
+  { m: 4, q: "La diferencia entre un pase bursátil y una caución bursátil radica:", a: "En que en la caución se entrega un aforo en bonos", w: ["En que en el pase se entrega un aforo en bonos", "El pase representa un derecho pero no una obligación de desarmar una posición en bonos", "Todas las anteriores"] },
+  { m: 4, q: "Las principales variables para la evaluación de un bono como inversión son:", a: "TIR – Duration modificada", w: ["Paridad – Valor Técnico", "Rentabilidad esperada – Vencimiento", "TIR – Rendimiento corriente"] },
+  { m: 4, q: "Calcule el rendimiento corriente (current yield) de un bono tipo bullet con VN $100 y cupón del 10%, si el precio de mercado es 107.99: [Rendimiento corriente = Cupón/ Precio Mercado]", a: "10%", w: ["10.80%", "7.99%", "9.26%"] },
+  { m: 4, q: "Se denominan TIPs a:", a: "T-Notes ajustables por la inflación emitidas por el Gobierno de Estados Unidos", w: ["Bonos emitidos por el Gobierno Británico", "Bonos emitidos por empresas internacionales a tasa variable", "Bonos cupón cero con un plazo de vencimiento superior a los 5 años"] },
+  { m: 4, q: "Teniendo en cuenta la Modified Duration como medida de mercado, un bono descuento (sin cupones) tiene un riesgo _________ respecto de un bono que tiene amortización periódica", a: "Mayor", w: ["Menor", "Igual", "No guarda relación"] },
+  { m: 4, q: "Se denomina bono Calleable a aquel cuya:", a: "Opción de compra que permite al emisor rescatar la deuda en forma anticipada a un precio predeterminado", w: ["Opción de venta que permite al emisor rescatar la deuda en forma anticipada a un precio predeterminado", "Respuesta a y b es correcta", "Todas las anteriores"] },
+  { m: 4, q: "La duration modificada (o modified duration) representa:", a: "Cuanto varia el precio del bono (en %) ante cambios de 100 bp (1%) en la tasa de interés", w: ["Cuanto varia el precio del bono (en $) ante cambios de 100 bp (1%) en la tasa de interés", "Cuanto varia el precio del bono (en $) ante cambios en la calificación de riesgo", "Cuanto varia el precio del bono (en %) ante cambios en la calificación de riesgo"] },
+  { m: 2, q: "En el Contrato de Fideicomiso ¿quién es la persona obligada a transferir la propiedad de los activos fideicomitidos?", a: "El Fiduciante", w: ["El Beneficiario", "El Fiduciario", "El Fideicomisario"] },
+  { m: 2, q: "En el Fideicomiso Financiero ¿qué es lo que evalúa la Calificadora de Riesgo?", a: "Ambos", w: ["La Compañía", "Los activos Fideicomitidos", "Al Fiduciante"] },
+  { m: 2, q: "¿Cuándo se requiere autorización de la CNV para actuar de fiduciario?", a: "El Fideicomiso se ofrece al público", w: ["El fideicomiso es de garantía", "El Fideicomiso es de administración", "Todas las anteriores"] },
+  { m: 2, q: "Cuando una empresa se financia a través de un Fideicomiso Financiero se dice que:", a: "Es una financiamiento por fuera del balance de la empresa", w: ["Es una deuda de la empresa", "Depende del tipo de activo que este fideicomitiendo", "Está emitiendo una ON encubierta"] },
+  { m: 2, q: "¿Qué características tienen que tener los activos fideicomitidos?", a: "Homogeneidad, atomización y parámetros de riesgo estable", w: ["Diversidad, concentración y parámetros de riesgo variables", "Activos de alta calidad crediticia por sobre cualquier otro parámetro", "Activos de distinta naturaleza (hipotecas, prendas, etc) y amortizados"] },
+  { m: 2, q: "Seleccione la definición correcta:", a: "El Fideicomiso es una figura jurídica por la cual una persona física o jurídica llamada el Fiduciante, transmite la propiedad fiduciaria de sus activos o una parte de ellos –los bienes fideicomitidos- a otra, llamada el Fiduciario, quien administra estos bienes en beneficios de terceros llamados Beneficiarios.", w: ["El Fideicomiso es un instrumento de oferta pública", "El Fideicomiso es un instrumento para que personas físicas puedan obtener financiación entregando activos en garantía (ya sea hipoteca o prenda)", "El Fideicomiso es una figura jurídica por la cual una persona física o jurídica llamada el Fiduciario, transmite la propiedad fiduciaria de sus activos o una parte de ellos –los bienes fideicomitidos- a otra, llamada el Fiduciante, quien administra estos bienes en beneficios de terceros llamados Beneficiarios."] },
+  { m: 2, q: "Marque la definición correcta:", a: "El Fiduciante es quien inicia el Fideicomiso y determina su estructura", w: ["El Fiduciario es quien designa al Fiduciante", "Los Beneficiarios pueden ser también Fiduciarios", "Quien remunera al Fiduciario son los Beneficiarios"] },
+  { m: 2, q: "Defina al Fideicomisario:", a: "Es el destinatario final de los bienes fideicomitidos. Una vez cumplidas las obligaciones del fideicomiso, los activos remanentes deben entregarse al Fideicomisario, que generalmente es el mismo Fiduciante", w: ["Es un sinónimo de Beneficiario", "Es el responsable de asegurar que el Fiduciario cumpla todas sus funciones. Resguarda los intereses del Beneficiario", "Es quien recibe la titularidad de los activos fideicomitidos"] },
+  { m: 2, q: "¿En los certificados de participación, cuál de las siguientes afirmaciones es correcta?", a: "Dan derecho a un utilidad (eventual) sobre los activos fideicomitidos", w: ["Dan derecho al capital más un interés", "Asegura el pago del capital pero no los intereses", "Todas las anteriores"] },
+  { m: 2, q: "¿Cuál de los siguientes roles son incompatibles?", a: "Fiduciante y Fiduciario", w: ["Fiduciante y Administrador", "Fiduciante y Beneficiario", "Todos los anteriores"] },
+  { m: 2, q: "¿Cuáles son las características principales de un Fideicomiso?", a: "Constituye un conjunto de bienes afectados a un fin", w: ["Tiene un titular, autonomía e independencia", "Registra Activos y Pasivos propios e individualizados", "Requiere Estados Contables propios"] },
+  { m: 2, q: "¿A qué es equivalente el Valor Nominal de los títulos de un Fideicomiso cuyo activo cedido es una cartera de créditos?", a: "Al valor futuro (capital + intereses) de la cartera cedida descontado a una tasa", w: ["Al capital de la cartera cedida", "Al capital de la cartera cedida descontado a una tasa", "A la suma de los intereses nominales + el capital"] },
+  { m: 2, q: "¿Qué se puede licitar generalmente al momento de la colocación de un titulo por oferta pública?", a: "Spread sobre una tasa de referencia (ejemplo: Badlar + Spread)", w: ["Tasa Interna de Retorno (TIR) o Precio", "Las respuestas A y B son correctas", "Solo por Valor Nominal"] },
+  { m: 2, q: "Un Fiduciario necesita la aprobación de la CNV cuando:", a: "Es Público", w: ["Es Privado", "Ambos casos", "Es indistinto"] },
+  { m: 2, q: "¿Cualquier tipo de flujo futuro es factible de securitizacion o titularización?", a: "Si, de hecho se puede securitizar el flujo de ingresos a percibir por la venta de entradas de los próximos 5 superclásicos de futbol", w: ["No, solamente aquellos en donde exista un derecho cierto de cobro (ej: pagaré, cheque, etc)", "No, no se puede securitizar si no hay un flujo 100% certero de cobranza a futuro", "Solo A y B"] },
+  { m: 2, q: "El fideicomiso financiero ¿paga impuestos?", a: "Si, tributa impuestos como cualquier sociedad, salvo en algunos casos donde tienen algunas exenciones", w: ["No, es una estructura completamente exenta", "Si, de hecho tributa ciertos impuestos especiales", "Ninguna de las anteriores"] },
+  { m: 5, q: "Contrato de futuro abierto:", a: "Aquella operación concertada que no está vencida ni ha sido cancelada por la realización de una operación inversa", w: ["Aquella operación que esta vencida y no ha sido cancelada por la realización de una operación inversa", "Aquella operación concertada que no está vencida pero ha sido cancelada por la realización de una operación inversa", "Todas las anteriores"] },
+  { m: 5, q: "¿Qué característica determina unívocamente que un contrato a plazo sea un futuro y no un forward?", a: "Todas las anteriores", w: ["La estandarización de los contratos", "Los precios públicos", "La existencia de una Contraparte Central"] },
+  { m: 5, q: "¿Qué es el precio de ajuste?", a: "El precio que se utiliza para calcular las Diferencias Diarias", w: ["El primer precio al que se realizaron operaciones en el día", "El último precio al que se realizaron operaciones en el día", "Todas las anteriores"] },
+  { m: 5, q: "Concepto de arbitraje en derivados:", a: "Utilización de los derivados para obtener un beneficio seguro a partir de la toma de posiciones compensadas en dos o más instrumentos", w: ["Utilización de los futuros, forwards, opciones y swaps para mitigar los efectos de movimientos adversos en los precios", "Utilización de los derivados para apostar a la dirección futura del mercado", "Todas las anteriores"] },
+  { m: 5, q: "En los mercados institucionales de opciones solo se negocia", a: "La prima de la opción", w: ["El precio de ejercicio", "La fecha de vencimiento", "La clase de opción"] },
+  { m: 5, q: "Opcion in the money", a: "La opción es ejercible, tiene valor intrínseco", w: ["La opción no es ejercible, no tiene valor intrínseco", "Precio del activo subyacente = precio de ejercicio", "Todas las anteriores"] },
+  { m: 5, q: "Un bull spread involucra:", a: "La compra de un call y la venta de otro call más fuera del dinero", w: ["La compra de una acción y la venta de un call", "La compra de dos contratos call", "La venta de dos contratos call"] },
+  { m: 5, q: "Las opciones americanas pueden ejercerse", a: "Cualquier día hasta el vencimiento", w: ["Solo el día del vencimiento", "Solo los martes", "Todas las anteriores"] },
+  { m: 5, q: "Las estrategia de lanzamiento cubierto involucra:", a: "La compra del activo subyacente e inmediata venta de calls", w: ["La compra de activo subyacente e inmediata compra de calls", "La venta de call y compra de call a un strike superior", "La compra de call y venta a un strike inferior"] },
+  { m: 5, q: "Ante la espera de un mercado de alta volatilidad, una estrategia con opciones correcta seria:", a: "Comprar Call y Puts (long straddle)", w: ["Permanecer cash", "Comprar Call y vender Put", "Vender Call y comprar Put"] },
+  { m: 5, q: "La tasa implícita de un Futuro en USD se calcula como:", a: "El diferencial entre el precio spot del dólar y su precio futuro", w: ["Tasa BADLAR + spread determinado por el mercado", "Fijada por el Banco Central", "La diferencia entre el precio del futuro y su equivalente en opciones"] },
+  { m: 5, q: "¿Cuál de las siguientes afirmaciones es correcta?", a: "Siempre es recomendable ejercer una opción in the money", w: ["Nunca es óptimo ejercer una opción de compra americana in the money", "Las opciones out of the money deben ser ejercidas", "La compra y venta de calls simultánea a un mismo strike y vencimiento es una estrategia conservadora"] },
+  { m: 5, q: "Si usted es un importador y debe cancelar una deuda en USD dentro de 2 meses, la estrategia sugerida con Futuros seria:", a: "Comprar futuros sobre USD", w: ["Vender futuros sobre USD", "Comprar put sobre USD", "Vender Call sobre USD"] },
+  { m: 5, q: "Si un productor agropecuario le solicita asesoramiento de cobertura de precios sobre la cosecha, Ud recomendaría:", a: "Vender futuros y/o comprar put", w: ["Comprar futuros y/o vender Put", "Solo comprar Futuros", "Solo vender Put"] },
+  { m: 5, q: "Un productor quiere cubrirse de riesgo precio al momento de su cosecha, esperada en 3 meses, debería:", a: "Comprar un Put tipo Europeo", w: ["Comprar un Put tipo Americano", "Comprar un Call tipo Americano", "Comprar un Call tipo Europeo"] },
+  { m: 5, q: "El valor teórico de una prima está dado por:", a: "El valor intrínseco + valor temporal", w: ["Valor intrínseco + costo tasa de interés libre de riesgo", "Tasa libre de riesgo + valor temporal", "Volatilidad del activo subyacente ajustado por tasa de interés"] },
+  { m: 5, q: "Opción at the money", a: "Precio del activo subyacente = Precio de ejercicio", w: ["La opción no es ejercible, no tiene valor intrínseco", "La opción tiene valor intrínseco", "Todas las anteriores"] },
+  { m: 4, q: "Los splits dividen la acción por un determinado ratio para:", a: "Disminuir el valor nominal de la acción", w: ["Modificar el patrimonio del inversor", "Aumentar el valor nominal de la acción", "Todas las anteriores"] },
+  { m: 4, q: "Definición de Beta:", a: "Marca el grado de sensibilidad de la acción respecto al mercado", w: ["Es la cantidad de veces que la ganancia por acción cabe en su propio precio", "Mónica", "Todas las anteriores"] },
+  { m: 4, q: "Cedears", a: "Son canjeables irrestrictamente por los valores negociables que representan y dan a sus titulares el beneficio de todos los derechos inherentes a los valores negociables representados", w: ["No son canjeables irrestrictamente por los valores negociables que representan y dan a sus titulares el beneficio de todos los derechos inherentes a los valores negociables representados", "Algunos son canjeables y otros no", "Todas las anteriores"] },
+  { m: 4, q: "Utilizando el Price Earning, cual acción de los siguientes 5 bancos que operan en el mismo país y tienen estructuras semejantes elegiría usted para invertir:", a: "Banco XXX PER 14.30", w: ["Banco ZZZ PER 15.40", "Banco YYY PER 22.35", "Banco WWW PER 14.45"] },
+  { m: 4, q: "Acciones de Valor. ¿Cuál de las siguientes afirmaciones es incorrecta?", a: "Beta mayor a 1", w: ["Subvaluadas según criterios de fundamentos", "Bajo nivel de deuda", "Bajo PER"] },
+  { m: 4, q: "Ratios de rentabilidad", a: "Mide la capacidad de generar más ingresos que egresos", w: ["Mide la capacidad de cancelar las deudas en el corto plazo", "Mide la eficiencia de la empresa en la utilización de sus activos", "Todas las anteriores"] },
+  { m: 4, q: "En un modelo de valuación por dividendos, si la empresa no retiene utilidades ¿qué características tiene?", a: "La empresa no crece, y su valor representa una perpetuidad de sus dividendos (P=D1/r)", w: ["La empresa crece al promedio de la industria y su valor es igual al valor libro", "La empresa no crece pero como reparte muchos dividendos los inversores le dan una cotización por encima de valor libro", "El valor de la empresa tiende a cero a largo plazo"] },
+  { m: 4, q: "La valuación contable utilizando el valor neto de los activos corrientes establece que:", a: "El criterio de selección es el de comprar acciones de empresas que cotizan hasta el 66% del valor de los activos corrientes neto de todas las deudas senior de capital accionario (deudas corrientes, previsionales y fiscales, y de las acciones preferidas)", w: ["El criterio de selección es el de comparar acciones de empresas que cotizan hasta el 66% del valor contable (valor libro)", "El criterio de selección es el de comprar acciones de empresas que cotizan hasta el 100% del valor contable (valor libro)", "El criterio de selección es el de comprar acciones de empresas que cotizan hasta el 100% del valor de mercado (valor libro)"] },
+  { m: 4, q: "Modelos de crecimiento constante ¿Cuál es la principal crítica al modelo de Gordon? [r=D1/P+g]", a: "La fórmula no puede utilizarse a menos que r>g", w: ["La fórmula no puede utilizarse a menos que r=g", "La fórmula no puede utilizarse a menos que r<g", "No tiene criticas"] },
+  { m: 4, q: "¿Cuáles de los siguientes modelos de valuación puede utilizarse para acciones?", a: "Todas las anteriores", w: ["Opciones reales", "Modelos de múltiplos", "Modelos contables"] },
+  { m: 4, q: "Análisis Técnico vs Análisis Fundamental", a: "El Análisis Fundamental busca determinar el valor intrínseco de una empresa, en cambio el Análisis Técnico tiene por objetico determinar el momento para comprar o vender el activo", w: ["El Análisis Fundamental busca determinar el valor de la empresa en el largo plazo y el Análisis Técnico tiene por objetivo determinar su valor para el corto plazo", "El Análisis Fundamental busca determinar el valor real patrimonial de la empresa y el Análisis Técnico el valor nominal", "El Análisis Fundamental busca determinar el valor temporal de una empresa y el Análisis Técnico el valor residual de la misma"] },
+  { m: 4, q: "El Price Earning representa", a: "La cantidad de veces que la ganancia por acción cabe en su propio precio", w: ["El cociente entre el precio de mercado y el valor libros de una empresa", "La cantidad de veces que el precio de una empresa acción entra en el WACC", "Todas las anteriores"] },
+  { m: 4, q: "Un instrumento es de renta variable cuando", a: "El inversor no conoce las rentas futuras", w: ["El inversor conoce las rentas futuras", "Cuando la volatilidad es superior al 10% anualizado", "Cuando Beta es igual a 1"] },
+  { m: 4, q: "¿Cuál de las siguientes afirmaciones sobre las medias móviles es correcta?", a: "Una media móvil no anticipa los movimientos del mercado, sino que es un indicador seguidor no-líder", w: ["Una media móvil anticipa los movimientos del mercado y por lo tanto es un indicador seguidor no-líder", "Una media móvil permite anticipar los cambios de tendencia", "Las medias móviles no son indicadores"] },
+  { m: 4, q: "De acuerdo a la Teoría de Dow ¿cuáles son las fases de un mercado alcista?", a: "Acumulación, crecimiento y baja", w: ["Crecimiento y baja", "Crecimiento, expansión y pánico", "La Teoría de Dow no reconoce ninguna fase en los mercados"] },
+  { m: 4, q: "Los principios filosóficos en que se basa el análisis técnico son:", a: "La acción del mercado es impredecible – No hay situaciones repetitivas – No existen las tendencias", w: ["La acción del mercado descuenta todo – Los precios no se mueven por tendencias – La historia nunca se repite", "La acción del mercado descuenta todo – Los precios se mueven por tendencias – La historia se repite", "El Análisis Técnico tiene como principio de base el comportamiento humano"] },
+  { m: 4, q: "Indique cual es la interpretación correcta de las siguientes relaciones \"volumen y precios\":", a: "Volumen en ascenso y alza en los precios: Tendencia Alcista. Fortaleza", w: ["Volumen en ascenso y baja en los precios: Sin Tendencia", "Volumen en ascenso y baja en los precios: Tendencia Alcista", "Volumen en ascenso y alza en los precios: Fin de Tendencia Bajista"] },
+  { m: 4, q: "¿Qué estudia el Análisis Técnico?", a: "El Análisis Técnico estudia los movimientos del mercado, principalmente mediante el uso de gráficos. Su objetivo es identificar las tendencias de los precios y tratar de pronosticar las futuras", w: ["El Análisis Técnico estudia los motivos por los cuales se producen movimientos en los precios y así logra identificar tendencias", "El Análisis Técnico estudia los balances de las empresas que cotizan para pronosticar futuras tendencias en sus cotizaciones", "El Análisis Técnico estudia la psicología de masas en los mercados para lograr explicar los movimientos de los precios"] },
+  { m: 4, q: "¿La acumulación de los datos de precio y volumen es relevante para el Análisis Técnico? (no están respuestas)", a: "No, no tiene ninguna relevancia", w: ["No, es de utilidad solo en algunos casos muy excepcionales", "Depende el tipo de activo. Si se trata de activos financieros si resulta relevante, pero en otros casos, no.", "Sí, es muy importante a los fines de alinear el análisis con el plazo objetivo definido por el inversor"] },
+  { m: 4, q: "Observe el siguiente gráfico e indique abajo la opción correcta de acuerdo al Análisis Técnico", a: "No es posible evaluar niveles críticos de precios sin considerar que activo se trata y cuáles son los fundamentos del mercado", w: ["Luego del 2012 el nivel de precios en torno a 2.300 es una resistencia", "A partir del año 2004 la zona de precios en torno a 900 debería considerarse un nivel de soporte", "Al no poder identificar las fases del mercado, cualquier análisis del grafico resulta inútil"] },
+  { m: 4, q: "¿Qué son los indicadores y osciladores técnicos?", a: "Son figuras chartistas que advierten de posibles cambios en la tendencia", w: ["Son la representación gráfica de relaciones matemáticas entre variables –generalmente cotizaciones- que ayudan a identificar momentos de compra y/o venta de un titulo", "Son proyecciones lineales de tendencias", "Son cálculos estadísticos para identificar las fases de los mercados y asi poder establecer precios de compra y venta de un titulo"] },
+  { m: 4, q: "Dentro del análisis chartista, ¿Cuál de las siguientes figuras no es de cambio de tendencia?", a: "Hombro-cabeza-hombro", w: ["Doble techo", "Piso redondeado", "Estandarte"] },
+  { m: 2, q: "¿Quién calcula la cuotaparte de un Fondo Común de Inversión?", a: "Agente de Administración de Productos de Inversión Colectiva de FCI", w: ["Agente de Custodia de Productos de Inversión Colectiva de FCI", "El Banco que oficia de custodia de los títulos", "Ambos, la Sociedad Depositaria y la Sociedad Gerente"] },
+  { m: 2, q: "¿Cuál de estas afirmaciones es verdadera?", a: "\"Un fondo común de inversión es un patrimonio indiviso, formado por aportes de un grupo de inversiones que tienen los mismos objetivos de rentabilidad y riesgo respecto de las inversiones que realizan y delegan a un equipo de profesionales su administración\"", w: ["\"Un Fondo Común de Inversión es un patrimonio indiviso, formado por aportes de un solo inversor que tiene un solo objetivo de rentabilidad y  riesgo respecto de las inversiones que realizan y delegan a un equipo de profesionales su administración\"", "\"Un Fondo Común de Inversión es un patrimonio divisible, formado por aportes de un grupo de inversores  que tienen los mismos objetivos  de rentabilidad y  riesgo respecto de las inversiones que realizan y delegan a un equipo de profesionales su administración\"", "\"Un Fondo Común de Inversión es un patrimonio indiviso, formado por aportes de un grupo de inversores que tiene distintos objetivos de rentabilidad y riesgo respecto de las inversiones que realizan y delegan a un equipo de profesionales su administración.\""] },
+  { m: 2, q: "¿Quién aprueba la posibilidad de que un Agente de Administración de Productos de Inversión de FCI (ex Sociedad Gerente) pueda vender fondos a clientes?", a: "La CNV", w: ["La CNV en forma conjunta con el BCRA", "La Bolsa de Comercio de Buenos Aires", "El BCRA"] },
+  { m: 2, q: "Un Fondo Común de Inversión Abierto posee la siguiente característica:", a: "Número de cuotapartes ilimitado", w: ["No puede suscribirse y rescatarse cuando se desee", "Pueden invertir en activos ilíquidos", "Inicia sin capital pero no puede crecer indefinidamente"] },
+  { m: 2, q: "Un Fondo Común de Inversión Cerrado posee la siguiente característica:", a: "No puede suscribirse y rescatarse cuando se desee", w: ["Numero de cuotapartes ilimitado", "Solo pueden invertir tanto en activos líquidos", "Inicia sin capital"] },
+  { m: 2, q: "Un Fondo de Renta Variable posee:", a: "Más alta volatilidad en relación a los demás fondos de Renta Fija", w: ["Baja volatilidad en relación a los demás fondos de Renta Fija", "Igual volatilidad en relación a los demás fondos de Renta Fija", "Es más volátil que los fondos de Renta Fija solamente si esta todo invertido en alternativas con Beta superior a 1"] },
+  { m: 2, q: "El benchmark de referencia sugerido para un fondo de renta fija local es", a: "El índice de bonos del Instituto Argentino  de Mercado de Capitales", w: ["El MSCI Argentina", "El JP Morgan Latam Bond Index", "El índice de bonos de la Bolsa de Comercio de Buenos Aires"] },
+  { m: 2, q: "Un Fondo de Plazo Fijo/Dinero (Money Market):", a: "Todas las anteriores son ciertas", w: ["Invierten gran parte de sus fondos en plazos fijos, cauciones o valores de muy corto plazo", "Rentabilidad similar a un plazo fijo con la ventaja que el rescate puede realizarse en cualquier momento (y no esperar un mínimo de 30 días)", "Utilizado por empresas o individuos que no quieren tener dinero ocioso en cuanta bancaria, pero tampoco están interesados en realizar un plazo fijo"] },
+  { m: 2, q: "Un Fondo Común de Inversión con valor al cierre de $45.557.833,34 y management fee del 2,5% anual. La comisión del día de la Sociedad Gerente será:", a: "$3.120", w: ["$6.240", "$5.220", "$12.621"] },
+  { m: 2, q: "Los Fondos Soberanos de Riqueza son:", a: "Vehículos de inversión que utilizan los Estados para controlar una cartera de activos financieros compuesta generalmente por bonos y acciones, aunque también se agregan inversiones inmobiliarias en calidad de renta fija", w: ["Vehículos de inversión que utilizan las administradoras privadas para controlar una cartera de activos financieros compuesta generalmente por bonos y acciones, aunque también se agregan inversiones inmobiliarias en calidad de renta fija", "Vehículos de inversión que utilizan los Estados para controlar una cartera de activos financieros compuesta exclusivamente por bonos y acciones", "Vehículos de inversión que utilizan los Estados para controlar una cartera de activos financieros compuesta exclusivamente por inversiones inmobiliarias"] },
+  { m: 2, q: "Exchange Trade Funds ¿Cuál de las siguientes afirmaciones es correcta?", a: "Todas las anteriores", w: ["Permite la venta en descubierto, por lo cual pueden desarrollarse estrategias especulativas a la baja de precios", "Comisiones muy bajas", "Administración pasiva"] },
+  { m: 2, q: "Hedge Funds ¿Cuál de las siguientes afirmaciones es incorrecta?", a: "Su transparencia y regulación es baja o nula", w: ["Su objetivo de rendimiento es la búsqueda de retornos absolutos ajustado por el riesgo", "Pueden realizar ventas en descubierto", "Todas las anteriores"] },
+  { m: 2, q: "¿Cuál de las siguientes NO es una operatoria prohibida para los fondos?", a: "Ventas en descubierto", w: ["Operar contratos a futuro", "Operar bonos de baja calificación crediticia", "Pueden operar todo tipo de activos y estrategias"] },
+  { m: 5, q: "Obtenemos luego del análisis de un activo (bono, acción, índice, etc) que el VaR a un día y para un nivel de confianza del 95% es de $1.000. Este resultado puede interpretarse como:", a: "La probabilidad de perder en un día más de $1.000 es del 95%", w: ["Existe un 95% de probabilidad de perder menos de $1.000 en un día de operaciones", "Aproximadamente 1 de cada 20 días nuestras pérdidas diarias serán inferiores a 1.000", "El 95% de la volatilidad del mercado será superior a los $1.000"] },
+  { m: 5, q: "Riesgo de una cartera", a: "Normalmente, el riesgo de una cartera es menor a la suma de riesgos de los activos", w: ["Normalmente el riesgo de una cartera es mayor a la suma de riesgos de los activos", "Normalmente, el riesgo de una cartera es igual a la suma de riesgos de los activos", "Todas las anteriores"] },
+  { m: 5, q: "Carteras activas", a: "El armado de la cartera es potestad del portfolio manager", w: ["Son aquellas carteras que buscar replicar el comportamiento de un índice", "Todas las anteriores", "Las dos primeras"] },
+  { m: 5, q: "El retorno de una cartera de inversión es:", a: "La suma de los retornos ponderados de cada uno de los activos que la componen", w: ["La multiplicación de los retornos ponderados de cada uno de los activos que la componen", "La suma de los retornos ponderados de cada uno de los activos que la componen ponderado por la volatilidad de la cartera", "La multiplicación de los retornos ponderados de cada uno de los activos que la componen ponderado por la volatilidad de la cartera"] },
+  { m: 5, q: "El beneficio de la administración profesional de inversiones para un particular es:", a: "Todos los anteriores", w: ["Realizar economías de escala para operar con menores comisiones", "Contar con un equipo dotado de características técnicas superiores a uno", "Descansar en la dedicación full-time de sus administradores"] },
+  { m: 5, q: "Una cartera ineficiente es aquella cartera que para un riesgo determinado el retorno es menor al de otra cartera con el mismo riesgo o tiene un riesgo mayor a otra cartera con igual retorno", a: "Verdadero si el horizonte de inversión es extenso", w: ["Verdadero", "Falso", "Verdadero si el horizonte de inversión es corto"] },
+  { m: 5, q: "¿Cuál de estas definiciones es correcta?", a: "El concepto de Value at Risk, o Valoración del Riesgo, proviene de la necesidad de cuantificar con un determinado nivel de confianza, el monto o porcentaje de perdida que un portafolio enfrentará independientemente del periodo predefinido de tiempo", w: ["El concepto de Value at Risk, o Valoración del Riesgo, proviene de la necesidad de cuantificar con un determinado nivel de confianza, el monto o porcentaje de perdida que un portafolio enfrentará en un  periodo predefinido de tiempo", "El concepto de Value at Risk, o Valoración del Riesgo, proviene de la necesidad de cuantificar sin un determinado nivel de confianza, el monto o porcentaje de perdida que un portafolio enfrentará independientemente del periodo predefinido de tiempo", "El concepto de Value at Risk, o Valoración del Riesgo, proviene de la necesidad de cuantificar con un determinado nivel de confianza, el monto o porcentaje de perdida que un portafolio enfrentará en un  periodo predefinido de tiempo, junto al promedio ponderado de la rentabilidad futura esperada."] },
+  { m: 5, q: "La estimación del VaR se hace por simulación de escenarios aleatorios y revaluando la posición del portafolio en el siguiente método:", a: "Paramétrico", w: ["Simulación de Monte Carlo", "Delta Normal", "Distribución normal de los retornos"] },
+  { m: 5, q: "¿Cómo se pueden disminuir riesgos?", a: "Las tres anteriores son ciertas", w: ["Hedgeando", "Diversificando", "Seguros"] },
+  { m: 5, q: "¿Cuál de estas afirmaciones es verdadera?", a: "Un tipo de cambio variable implica baja volatilidad en el tipo de cambio pero no implica ausencia de riesgo", w: ["Un tipo de cambio fijo implica baja volatilidad en el tipo de cambio pero no implica ausencia de riesgo", "Un tipo de cambio variable implica baja volatilidad en el tipo de cambio e implica ausencia de riesgo", "Un tipo de cambio fijo implica elevada volatilidad en el tipo de cambio pero implica ausencia de riesgo"] },
+  { m: 5, q: "El concepto de diversificación establece que:", a: "Una mayor diversificación de activos puede llevar a un riesgo tendiente a cero", w: ["Una cartera de 100 activos de empresas de una misma o similar industria está debidamente diversificada para reducir riesgos", "Una cartera correctamente diversificada es aquella que tiene una correlación de sus activos cercana a 1", "Existe un riesgo diversificable o único que puede reducirse hasta el límite del riesgo de Mercado"] },
+  { m: 5, q: "Los principales supuestos de CAPM son:", a: "No hay costos de transacción, los activos son perfectamente divisibles y no hay impuestos", w: ["Bajos costos de transacción, activos no divisibles y existencia de impuestos razonables", "Costo de Fondeo con riesgo elevado y perfil del inversor conservador", "Costo de financiamiento bajo, activos divisibles y altos impuestos"] },
+  { m: 5, q: "Riesgo de mercado:", a: "Riesgo de perdidas debido a errores de ejecución", w: ["Riesgo de perdidas debido a la inhabilidad de la contraparte para cumplir con su compromiso legal de pago", "Riesgo de pérdida debido a las fluctuaciones en las tasas de cambio, tasas de interés, precios de acciones y commodities", "Riesgo de pérdida debido a la inhabilitación para fondear activos ilíquidos"] },
+  { m: 3, q: "La Comisión Nacional de Valores (CNV) es una entidad autárquica con jurisdicción en toda la República Argentina bajo cuya orbita se encuentran los sujetos y valores negociables comprendidos dentro del mercado de capitales. Sus objetivos y funciones están explicitados en la ley 26.831:", a: "Promover la participación en el mercado de capitales, fortalecer los mecanismos de protección y prevención, promover el acceso al mercado de capitales de las pequeñas y medianas empresas, propender a la creación de un mercado de capitales federalmente integrado, fomentar la simplificación de la negociación para los usuarios", w: ["Promover la participación en el mercado de capitales, propender a la creación de un mercado de capitales federalmente integrado, fomentar la simplificación de la negociación para los usuarios", "Promover la participación en el mercado de capitales, fortalecer los mecanismos de protección y prevención, promover el acceso al mercado de capitales de las pequeñas y medianas empresas, generar un vínculo entre las empresas y los bancos", "B y C"] },
+  { m: 3, q: "Índice de sustentabilidad empresaria: un índice divide los componentes a evaluar en distintas dimensiones para determinar la sostenibilidad de una empresa. Mínimamente pueden utilizar tres grandes dimensiones:", a: "Dimensión Económica, Ambiental y Social", w: ["Dimensión Social, Política y Ambiental", "Dimensión Ambiental, Política y Sustentable", "B y C"] },
+  { m: 3, q: "La Comisión Nacional de Valores (CNV) es una entidad autárquica con jurisdicción en toda la República Argentina bajo cuya orbita se encuentran los sujetos y valores negociables comprendidos dentro del mercado de capitales. Indique cuál de las siguientes funciones es correcta:", a: "A y B son verdaderas", w: ["Fortalecer los mecanismos de protección y prevención de abusos contra los pequeños inversores", "Promover el acceso del mercado de capitales de las pequeñas y medianas empresas", "La CNV no es una entidad autárquica"] },
+  { m: 3, q: "El test del inversor sirve para:", a: "Conocer el perfil del inversor dentro del mercado de capitales", w: ["Saber cuánto dinero invertir", "En qué plazo invertir el dinero", "Armar una cartera diversificada"] },
+  { m: 3, q: "Una de las formas de comparar inversiones es:", a: "A igual rentabilidad, hay que optar por la inversión con menor riesgo", w: ["A igual riesgo, hay que optar por la inversión con menor rentabilidad", "Un mayor riesgo siempre implica obtener una mayor rentabilidad", "A y C son correctas"] },
+  { m: 3, q: "Manipulación y engaño en el mercado: las emisoras, agentes, inversores y demás intervinientes, por sí o por interpósita persona, deberán (marque la conducta CORRECTA):", a: "Abstenerse de realizar prácticas o conductas que pretendan o permitan la manipulación de precios o volúmenes de los valores negociables listados en mercados", w: ["Realizar operaciones no autorizadas expresamente por la Comisión", "Ofrecer, comprar, vender o realizar cualquier tipo de operación sobre valores negociables que por sus características debieran contar con autorización de oferta publica y no la hubieran obtenido al momento de la operación", "Operar instrumentos no autorizados por la CNV"] },
+  { m: 3, q: "El Código de Protección al Inversor o Código de Conducta, en su artículo 5 indica: las personas físicas y/o jurídicas autorizadas a funcionar y registradas en la Comisión deberán:", a: "Establecer sistemas que garanticen el cumplimiento de las obligaciones impuestas y la prevención y represión de las conductas contrarias a la transparencia en el ámbito de la oferta publica, conforme el presente Titulo", w: ["Conforme lo dispuesto en el artículo 103 de la Ley Nº 26.831, toda persona sujeta a un procedimiento de investigación tiene el deber de colaborar con la Comisión, pudiendo la conducta observada durante el procedimiento constituir un elemento de convicción corroborante de las pruebas, para decidir la apertura de sumario y valorable en su posterior resolución final", "Ejecutar con celeridad las órdenes recibidas, en los términos en que ellas fueron impartidas", "B y C"] },
+  { m: 3, q: "Según el cálculo de rendimiento esperado de un portfolio de dos activos: Activo 1) $150.000 y rinde un 10% y Activo 2) $50.000 y rinde un 20%. Cuál sería el rendimiento del portfolio:", a: "12.5%", w: ["30%", "20%", "18.5%"] },
+  { m: 3, q: "La Oficina de atención y protección al inversor es un canal de acceso directo a las consultas de los inversores donde…:", a: "Podrán consultar sobre cuestiones generales relativas a operaciones en el mercado de capitales. Consultar acerca de los instrumentos financieros disponibles. Conocer el ámbito de competencia de la CNV. Realizar una denuncia en caso de que el inversor se considere perjudicado en alguna de las operatorias del mercado.", w: ["Podrán consultar acerca de los instrumentos financieros disponibles dentro del mercado de capitales, ejecutar órdenes en forma directa con costos más económicos que la media del mercado. Realizar una denuncia en caso que el inversor se considere perjudicado en alguna de las operatorias del mercado.", "El objetivo es poder brindar asesoramiento al inversor desde un punto de vista más objetivo para que esto no genere en el inversor perdidas en sus inversiones, por este motivo la CNV pone a disposición de los inversores la posibilidad de ejecutar ordenes en forma directa con costos más económicos que la media del mercado", "Gestionar trámites ante el Organismo"] },
+  { m: 3, q: "Horizonte de inversión a corto plazo:", a: "Indica que la inversión que vamos a realizar tiene un horizonte menor al año", w: ["Indica que la inversión que vamos a realizar implica asumir un riesgo alto", "Indica que la inversión que vamos a realizar implica asumir un riesgo bajo", "Indica que la inversión que vamos a realizar tiene un horizonte menor al mes"] },
+  { m: 3, q: "La gestión activa de una cartera de inversión implica:", a: "Un seguimiento constante de los mercados y de los títulos individuales negociados en ellos, ajustando en cada momento la composición de la cartera", w: ["La cartera se auto-administra en base al riesgo inversor", "La cartera se gestiona en base a la eficiencia de los mercados", "Realizar operaciones recurrente"] },
+  { m: 3, q: "Una cartera está debidamente diversificada cuando", a: "La cartera está compuesta por varios activos con una baja correlación entre ellos", w: ["Existe al menos 30-40 activos de un mismo sector económico", "La cartera está compuesta por varios activos con una alta correlación entre ellos", "Cuando a una cartera de acciones se le agregan bonos de empresas relacionadas"] },
+  { m: 1, q: "¿Cuáles son las dimensiones básicas para el Índice de Sustentabilidad Empresaria Mexicano?:", a: "Gobierno Societario, Medio Ambiente y Social", w: ["Gobierno Societario", "Medio Ambiente", "Gobierno Societario, Medio Ambiente, Social y Entretenimiento"] },
+  { m: 1, q: "Índice de Sustentabilidad Empresaria – Los Indicadores de Cambio Climático se sustentan en el cumplimiento de alguno de los siguientes ítems:", a: "La responsabilidad de la política debe estar a nivel de Gerencia", w: ["Reducciones significativas de emisiones de Gas de Efecto Invernadero", "Declaración pública del impacto climático para la empresa y su falta de preocupación por mitigar sus efectos", "Declaración pública del compromiso a no reducir el impacto climático de lo que se produce"] },
+  { m: 1, q: "Gobierno Societario observa una cultura empresarial que se define:", a: "Para elevar la transparencia de la información y profesionalizar gestión interna", w: ["Mantener la exposición al riesgo y aumentar la posibilidad de fraude corporativo", "Concientizarse sobre beneficios de menor calidad de Gobierno Societario", "Asegurar la representatividad de las mayorías en los órganos de administración"] },
+  { m: 1, q: "El perfil de sociedades tipo adaptativo cumple con los siguientes requisitos:", a: "Toma de decisiones por parte de su fundador", w: ["Procesos y procedimientos formalizados", "Se anticipa a códigos, normas y requerimientos", "Información escasamente difundida"] },
+  { m: 1, q: "Qué característica tienen las organizaciones de alta confiabilidad", a: "La lógica económica parece orientar en forma exclusiva las decisiones organizacionales", w: ["Su naturaleza por la tensión entre las lógicas económicas, de seguridad y de preservación de la organización", "Como los fondos de inversiones, entidades financieras, brokers, entre otros", "No reportar incidente"] },
+  { m: 1, q: "Que beneficio tiene la adopción de las NIIF:", a: "Contribuye a la calidad de la información financiera y provee un lenguaje común que favorece la transparencia y comparabilidad", w: ["Incrementa los costos en las ofertas públicas internacionales", "No ayuda a la evaluación de riesgos crediticios", "Normas globales que no han sido diseñadas para ser aplicadas en los estados financieros"] },
+  { m: 1, q: "Como define los pasivos contingentes:", a: "Obligación posible por un evento pasado", w: ["Obligación presente por un evento pasado", "Erogación probable", "Estimación confiable"] },
+  { m: 1, q: "El objetivo de las Sociedades de Garantía Recíproca:", a: "Otorgar garantías a sus socios participes", w: ["Los socios protectores no aportan al fondo de riesgo", "Los socios partícipes no aportan al capital social", "No asesoran sobre la formulación de sus proyectos"] },
+  { m: 1, q: "Cuáles son los beneficios para el socio protector de una Sociedad de Garantía Recíproca:", a: "Los aportes al capital y al fondo de riesgo de las SGR, son deducibles de la utilidad del ejercicio fiscal de quien las generó", w: ["Los activos que constituyen el Fondo de Riesgo no pueden ser invertidos", "Mejorar su desempeño competitivo", "Mejora los plazos de financiación"] },
+  { m: 1, q: "¿Qué empresas/ acciones están exceptuados de emitir Estados Financieros bajo Normas NIIF?", a: "C y D son correctas", w: ["Todas las empresas que coticen sus acciones bajo el régimen de oferta pública están obligadas a emitir Estados Financieros bajo NIIF", "Todas las empresas que coticen sus acciones bajo el régimen de oferta pública tienen la opción de emitir Estados Financieros bajo NIIF", "PyMEs que coticen sus acciones y/u obligaciones negociables"] },
+  { m: 1, q: "Cual es una de las características de una SGR", a: "El apalancamiento autorizado por BCRA se potencia por cuatro", w: ["Disminución de la informalidad de la economía", "Favorecen relativamente la generación de empleo", "Sustituyen a las Entidades Financieras"] },
+  { m: 1, q: "Teniendo en cuenta el perfil de sociedades de tipo adaptativo ¿Cuáles de los siguientes requisitos cumple con dicho perfil?", a: "Procesos y procedimientos formalizados", w: ["Toma de decisiones por parte de su fundador", "Se anticipa a códigos, normas y requerimientos", "Información escasamente difundida"] },
+  { m: 1, q: "¿Qué instrumento financiero se encuentra exento del Impuesto a los Débitos y Créditos Bancarios en las transacciones realizadas por una empresa?", a: "Las cuotapartes de Fondos Comunes de Inversión con Oferta Pública", w: ["Los Títulos Públicos Nacionales, Provinciales y Municipales", "A y B son correctas", "Acciones"] },
+  { m: 1, q: "¿Cuál de las siguientes afirmaciones es correcta respecto del Objeto de una SGR?", a: "El principal objeto de las SGR es el otorgamiento de Garantías a sus socios/ participes", w: ["Las SGR tienen como principal objeto prestar dinero a sus socios participes", "Las SCG se crean para invertir en empresas PyMEs", "Las SGR tienen como objeto principal otorgar Garantías a sus socios protectores"] },
+  { m: 1, q: "¿Hasta cuánto puede ser el máximo apalancamiento del Fondo de Riesgo de una SGR autorizado por el BCRA?", a: "4 veces el Fondo de Riesgo", w: ["1 vez el Fondo de Riesgo", "16 veces el Fondo de Riesgo", "2 veces el Fondo de Riesgo"] },
+  { m: 1, q: "El socio protector de una SGR tiene, entre otros, el siguiente beneficio:", a: "Los aportes al capital y al Fondo de Riesgo de las SGR son deducibles de la base imponible del Impuesto a las Ganancias en el ejercicio fiscal en el que lo efectué", w: ["Mejora su Gobierno Corporativo", "Obtiene mejores tasas de interés en los bancos", "Puede convertirse en socio participe de la misma SGR y obtener beneficios y avales financieros"] },
+  { m: 6, q: "¿Cuál es la aseveración correcta?", a: "Introducción subrepticia de dinero de origen ilícito en los canales legítimos de la economía formal", w: ["Introducción de dinero de origen licito en los canales legítimos de la economía formal", "Retiro de dinero de origen licito de la economía formal", "Introducción subrepticia de dinero de origen licito en los canales ilegítimos de la economía formal"] },
+  { m: 6, q: "¿Cuál de estos organismos (entre otros) se ocupa del estudio, investigación, promoción de estándares y cumplimiento de políticas internacionales de prevención?", a: "GAFI, Egmont Group, ONU", w: ["AFIP, ANSES, FMI", "UNICEF, ONU, FIFA", "Todos los anteriores"] },
+  { m: 6, q: "¿Cuál de estos podría ser un delito precedente de dinero?", a: "Todas las anteriores", w: ["Comercialización de estupefacientes", "Malversación y desvíos de fondos públicos", "Promoción de la prostitución"] },
+  { m: 6, q: "¿Cuáles son las etapas del Lavado de Dinero?", a: "Colocación, estratificación, integración", w: ["Ubicación, unificación, diferenciación", "Reducción, desviación, integración", "Ninguna de las anteriores"] },
+  { m: 6, q: "¿Cuál es la aseveración correcta?", a: "C es correcta", w: ["El GAFI evalúa a sus miembros cada 4 años", "El GAFILAT realiza la evaluación a la Argentina", "El FMI realiza evaluaciones en materia de Prevención de Lavado de Activos a la Argentina cada 4 años"] },
+  { m: 6, q: "En Argentina, el organismo encargado de velar que se cumpla la regulación vigente en materia de prevención de lavado de activos es:", a: "UIF", w: ["AFIP", "BCRA", "CNV"] },
+  { m: 6, q: "Los sujetos obligados deben", a: "Todas las anteriores", w: ["Mantener una base y registro de las operaciones que realizan sus clientes", "Reportar operaciones sospechosas", "Poseer e implementar un programa de Políticas de prevención de lavado de activos y financiación del terrorismo"] },
+  { m: 6, q: "¿Quién es un cliente habitual?", a: "Aquel que tienen una operatoria anual igual o mayor a $60.000", w: ["Aquel que tiene una operatoria anual menor a $60.000", "Aquel que tienen una antigüedad de más de 6 meses con la institución", "Aquel que tiene una antigüedad de más de 1 año con la institución"] },
+  { m: 6, q: "Normas de CNV para ingreso y egreso de fondos. Los agentes solo podrán recibir o pagar por cliente y por día fondos en efectivo por un importe que no exceda:", a: "$1.000", w: ["$10.000", "$60.000", "No hay límites en efectivo"] },
+  { m: 6, q: "¿Cuál de estos ítems conforman uno de los cuatro pilares del programa de prevención de Lavado de Activos y Financiación del Terrorismo?", a: "Todos", w: ["Políticas y Procedimientos", "Oficial de Cumplimiento PLAFT", "Entrenamiento"] },
+  { m: 5, q: "Que muestra incompatibilidad entre un AP y un ALyC", a: "Mismo domicilio", w: ["Documentacion", "Numero de matricula", "Agente de deposito colectivo"] },
+  { m: 5, q: "Un mercado tiene las siguientes limitaciones:", a: "Ninguna accionista puede tener mas del 20% del capital social, y toda tenencia superior al 2% debe informarse a la CNV", w: ["Ningun accionista puede tener mas del 15% del capital social, y toda su tenencia superior al 2% debe informarse a la CNV", "Ningun accionista puede tener mas del 25% del capital social, y toda su tenencia superior al 3% debe informarse a la CNV", "No hay limite en la tenencia maxima de acciones pero toda tenencia superior al 3% hay que informar a la CNV"] },
+  { m: 5, q: "Si un Idoneo que trabaja para un ALyC no puede resolver un problema con un cliente...¿que debe hacer?", a: "Contactar al Responsable con relaciones con el Publico", w: ["Llamar al Centro de Atencional inversor de la CNV", "Reportar al Directorio del ALyC el inconveniente", "Delegar el cliente a otro idoneo mas experiementado y este debe pertenecer al mismo ALyC"] },
+  { m: 5, q: "Si ADC detecta que el comitente no accedio durante tres meses consecutivos con su clave a sus saldos y/o cuando el resumen mensual remitido por correo fisico su domicilio denunciado fuera devuelto al respectivo ADC, y/o el titular no acusara recibo de los correos electronicos remitios al ADC", a: "Remitira notificación al titular de la cuenta depositante, solicitandole que comunique al titular de la subcuenta que denuncie nuevo domicilio postal, nuevo correo electronico o ratifique los denunciados dentro de los 30 dias corridos de notificado el Agente. De no tener respuesta se bloquea la cuenta.", w: ["Remitira notificación al titular de la cuenta depositante. solicitandole que comunique al titular de la subcuenta comitente que se encuentra bloqueada su cuenta y debera solicitar su apertura nuevamente", "El agente de Deposito Colectivo no tiene facultades para bloquear las cuentas comitentes", "Ninguna de las anteriores"] },
+  { m: 5, q: "Los Agentes Asesores en Mercado de Capitales pueden:", a: "Prestar todo asesoramiento al publico inversor", w: ["Prestar todo tipo de asesoramiento y administrar carteras de inversion", "Prestar todo asesoramiento al publico inversor y gestionar ordenes de sus clientes", "Ninguna de las anteriores"] },
+  { m: 5, q: "La definicion de Agente Asesor es:", a: "Toda persona física o juridica que desarrolla todo asesoramiento en el ambito de mercado de capitales y que implica contacto con el publico inversor", w: ["Toda persona física o juridica que desarrolle la actividad con idoneidad", "Toda persona física o juridica que desarrolla la actividad de comercializacion de valores negociables dentro de un mercado", "Ninguna de las anteriores"] },
+  { m: 5, q: "Cuales son las limitaciones de los AP", a: "Custodiar fondos", w: ["Prestar asesoramiento al publico en materia de mercado de capital", "Referenciar FCI", "Ninguna de las anteriores"] },
+  { m: 5, q: "Un AP puede captar clientes para los AN, ALyC y AAGI?", a: "Sí", w: ["No", "Puede firmar contrato solo con un AN", "No, solo capta clientes propios"] },
+  { m: 5, q: "En el caso de emisoras que revisten la calidad de Mercado, deben informar a la CNV sus tenencias accionarias?", a: "No, al menos que sea requerido por la CNV", w: ["Sí, enviando la informacion a la CNV sinq ue sea requerida", "Sí, enviando la informacion por la AIF", "Ninguna de las anteriores"] },
+  { m: 5, q: "Un AA puede firmar un acuerdo con un ALyC para derivar clientes a cambio de una comisión?", a: "No", w: ["Sí", "Puede firmar solo con un AN", "Ninguna de las anteriores"] },
+  { m: 5, q: "Cuando el ADC bloquea una comitente", a: "Para desbloquear la cuenta el titular de las subcuentas comitentes bloqueadas debe presentar ante el ADC, a denuncias, nuevo domicilio postal o correo electronico.", w: ["La cuenta puede continuar con movimientos de valores negociables", "Se permiten movimientos de valores negociables", "Ninguna de las anteriores"] },
+  { m: 3, q: "La calificacion de riesgo en el marco de la solicitud de Oferta Publica de Obligaciones Negociables y otros valores de Deuda tiene el caracter de:", a: "Optativa respecto del monto maximo autorizado o de cada clase o serie", w: ["Obligatoria respecto de cada clase o serie", "Obligatoria en el caso de la emisora o este tramitando el ingreso a la Oferta Publica", "Ninguna de las anteriores"] },
+  { m: 3, q: "La obligacion de los sujetos obligados para informar a traves de la AIF aquellos hechos relevantes aptos para afectar en forma significativa la venta de los valores negociables, se considera cumplida si:", a: "Se informa ni bien se toma conocimiento del hecho", w: ["Es informada, sin importar el plazo", "Se informa antes que el hecho cobre estado publico por otro medio", "Ninguna de las anteriores"] },
+  { m: 3, q: "Los inversores tenedores de acciones, deben informar su posicion a la CNV?", a: "No deben informarlo", w: ["Si, en el dia", "No, al menos que lo requiera la CNV", "Ninguna de las anteriores"] },
+  { m: 2, q: "La denominación de un Fondo Común de Inversión debe incluir:", a: "La sigla F.C.I", w: ["Referencias identificatorias que aseguren una adecuada individualización de cada Fondo", "Referencias genéricas de los activos integrantes del haber del Fondo", "Ninguna de las anteriores"] },
+  { m: 2, q: "Un Fondo Común de Inversion encueadrado bajo el inciso A del articulo 4° especializado en activos de renta fija que mantiene en cartera las siguientes inversiones. ¿por cuál de ellas se encuentra excedido?", a: "25% Acciones emitidas en el pais", w: ["25% en Plazos Fijos no precancelables", "40% en Obligaciones Negociables en diversos emisores del país", "Ninguna de las anteriores"] },
+  { m: 2, q: "La moneda de un Fondo Común de Inversión establecida en el Reglamento de Gestión determina la moneda de los activos que pueden integrar la cartera de inversiones del mismo:", a: "Falso", w: ["Verdadero", "Depende del tipo de activo", "Solo aplica a FCI cerrados"] },
+  { m: 2, q: "La composición de una cartera de un fondo común en la que la sucripción es únicamente en pesos puede contener:", a: "Activos en moneda extranjera y en moneda local", w: ["Valores negociables emitidos en moneda local", "Valores negociables emitidos en moneda extranjera", "Es indistinto"] },
+  { m: 2, q: "Cual de los siguientes honorarios NO está incluidos en los resultados del fondo:", a: "Gastos de suscripción", w: ["Gastos de gestión", "Gastos de extraordinarios que pertenezcan a la administración", "Ninguna de las anteriores"] },
+  { m: 2, q: "Características de un ETF", a: "Es un FCI en el exterior que se propone seguir un indice/benchmark, tiene cotización en mercados y administración pasiva.", w: ["Es un FCI en el exterior que busca obtener resultados positivos sin un indice de referecia, tiene cotización en mercados y administración activa.", "Es un FCI privado, conocido como HedgeFund, con cotización en el exterior y administración activa.", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cuál de los siguientes FCI tiene un plazo mayor para estar totalmente integrado?", a: "FCI para proyectos de infraestructura agricola", w: ["FCI de renta fija", "FCI de renta variable", "Ninguna de las anteriores"] },
+  { m: 2, q: "Quien puede comercializar las cuotapartes de un FCI?", a: "La Gerente, La Depositaria y el Agente Colocador y Distribución (simple o integral)", w: ["Bancos, ALyC y AN", "Gerente y ALyC", "ALyC, ACyD, AN, AP"] },
+  { m: 2, q: "FCI de Dinero , el valor de la cuota parte cambia por:", a: "Por la valuación del fondo", w: ["Suscripciones y rescates de cuotas partes", "Ambas son correctas", "Ninguna de las anteriores"] },
+  { m: 2, q: "El Fondo no tiene por obligacion informar:", a: "Tasa de rendimientos esperadas", w: ["Valor de Cuotapartes", "Activos integrantes del fondo", "Ninguna de las anteriores"] },
+  { m: 2, q: "Un potencial inversor adverso al riesgo pretende adquirir valores fiduciarios. En función de los siguientes activos subyacentes, ¿cual recomendaría?", a: "Créditos de consumo", w: ["Créditos de originacion futura", "Bonos no investment grade", "Ninguna de las anteriores"] },
+  { m: 2, q: "Un Fondo Común de Inversión especializado en renta Mixta no se encuentra habilitado a:", a: "Integrar parcialmente la cartera con metales preciosos", w: ["Invertir en un Fondo Común especializado en renta fija", "La cartera con divisas", "Ninguna de las anteriores"] },
+  { m: 2, q: "¿Cuál de estas funciones no se encuentran a cargo de la Sociedad Gerente de Fondos Comunes de Inversión?", a: "Desempeñar la guarda y la custodia de valores y demás instrumentos", w: ["Gestionar el patrimonio del fondo", "Ejercer representación colectiva de los cuotapartistas en lo concerniente a sus intereses y respecto de terceros", "Ninguna de las anteriores"] },
+  { m: 2, q: "Definicion de cuotaparte", a: "Unidad de medida de la participación que tiene el inversor dentro del fondo, vendría a ser la parte de la \"bolsa\" que le corresponde.", w: ["Unidad de medida de la participación que tiene el inversor dentro del mercado de capitales", "Unidad de medida de la participación que tiene el inversor dentro del ETF, vendría a ser la parte del \"ETF\" que le corresponde.", "Ninguna de las anteriores"] },
+  { m: 2, q: "En el caso de un Fondo de Mercado de Dinero, el Margen de Liquidez debe constituirse sobre la porcion de activos", a: "De renta fija", w: ["De renta variable", "Que evalúen a devengamiento", "Ninguna de las anteriores"] },
+  { m: 2, q: "Marque la afirmacion correcta referida a un FCI", a: "Puede invertir un máximo de 30% en titulos públicos", w: ["Puede invertir un maximo de 20% en ON de un mismo emisor", "Puede invertir un máximo de 10% en Plazo 3jo precancelable", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cuál de las siguientes afirmaciones sobre FCI es correcta?", a: "Se podrá mantener disponibilidades en cuentas en el exterior solo para el caso de depósitos y otras transacciones en moneda extranjera que fueren necesarios para las operaciones de los FCI en mercados del exterior", w: ["Un FCI no podrá mantener en todo momento disponibilidades depositadas en cuenta en el exterior en un % que no sea mayor al 10% sin importar su finalidad", "La cartera de un FCI no podrá mantener disponibilidades depositadas en cuentas en el exterior", "Ninguna de las anteriores"] },
+  { m: 2, q: "Seleccione la afirmacion correcta sobre los Fci cerrados:", a: "Pueden adquirirse cuotapartes de renta y/o condominio", w: ["Solo pueden adquirirse cuotapartes en la suscripción inicial", "Deben contar con una calificación de riesgo", "Ninguna de las anteriores"] },
+  { m: 2, q: "Seleccione la afirmacion correcta:", a: "Los FCI pueden pagar los rescates con valores de cartera en casos excepcionales con previa autorizacion de la CNV", w: ["Los FCI no pueden abonar rescates con valores de cartera", "Los FCI pueden abonar los rescates con valores de cartera sin informar a la CNV", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cual de las siguientes afirmaciones es correcta?", a: "Los FCI tienen permitido efectuar operaciones con instrumentos financieros derivados con fines de cobertura o como inversion para gestionar de modo eficaz la cartera mientras la posición total a riesgo mercado no supere el patrimonio del fondo", w: ["Los FCI no tienen permitido efectuar operaciones con instrumentos financieros derivados", "Los FCI solo tienen permitido efectuar operaciones con instrumentos financieros con derivados con fines de cobertura", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cliente adverso al riesgo, que Fideicomiso recomendarias?", a: "FF de creditos consumo", w: ["FF de Futuros", "FF con calificacion inferior a investment grade", "Ninguna de las anteriores"] },
+  { m: 2, q: "Un inversor adverso al riesgo que desea invertir en fideicomisos financieros, que le recomendaria:", a: "Certificado de deuda, baja volatlidad y bajo rendimiento", w: ["Certificados de participacion, alta volatilidad y alto rendimiento", "Certificado de deuda, baja volatilidad y alto rendimiento", "Ninguna de las anteriores"] },
+  { m: 2, q: "En la administracion de un FF, el Fiduciario podra delegar la ejecucion de las funciones de administracion en cuyo caso será responsable de:", a: "La gestion de/los subcontratantes frente a terceros.", w: ["Solo por las gestiones de quien realice las funciones de cobro", "Por su propia actuación siempre y cuando haya delegado todas las restantes funciones", "Ninguna de las anteriores"] },
+  { m: 2, q: "Los VDF son emitidos por:", a: "El Fiduciario o un tercero", w: ["El fiduciante o un tercero", "El fiduciario, el Fiduciante o un tercero", "Ninguna de las anteriores"] },
+  { m: 2, q: "¿Cuál de los siguientes Fideicomisos Financieros se considera que se encuentra destinado al financiemiento de PyMEs?", a: "Un Fideicomiso Financiero cuyos fiduciantes califican como Pyme CNV", w: ["Un Fideicomiso Financiero cuyo fiduciante no califica como Pyme CNV", "Un Fideicomiso Financiero cuyo fiduciante no califica como PyME CNV, pero el 60% del monto del activo fideicomitido (valor nominal), se encuentra destinado al financiamiento de PyMEs?", "Ninguna de las anteriores"] },
+  { m: 2, q: "La Custodia de los bienes fideicomitidos corresponen al Fiduciario, sin embargo este podra delegar la ejecucion de algunas de tales funciones en:", a: "El administrador o un tercero", w: ["No puede delegarla", "El fiduciante sin importar el caracter revista", "Ninguna de las anteriores"] },
+  { m: 2, q: "La administracion de un fideicomiso, que comprende todas las funciones inherentes a la conservacion custodia cobro y realizacion del patrimonio fideicomitido, corresponde al fiduciario. Sin embargo podra delegar la ejecución de las funciones de administracion en cuyo caso sera responsable por:", a: "Es responsable por todas las funciones, aunque esten delegadas.", w: ["Solo por la gestion de quien realice las funciones de cobro", "Por su propia actuacion siempre y cuando haya delegado todas las restantes funciones", "Ninguna de las anteriores"] },
+  { m: 2, q: "Los Valores Fiduciarios podran ser emitidos por", a: "El fiduciario o un tercero", w: ["El fiduciante o un tercero", "El fiduciario, el fiduciante o un tercero", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cuando el Fiduciario delega la ejecucion de las funciones de administracion, el agente de cobro debe depositar en la cuenta del fideicomiso, operada exclusivamente por si o el Fiduciario, los fondos provenientes de las cobranzas", a: "En un determinado plazo de 3 días hábiles", w: ["Sin determinacion de plazo", "El plazo que se fija contractualmente", "Ninguna de las anteriores"] },
+  { m: 2, q: "Segun las Normas Internacionales de Informacion Financiera, la medicion de los activos financieros destinados a la venta se valuan a:", a: "Valor razonable", w: ["Valor actual de [ujo", "Costo amortizado", "Ninguna de las anteriores"] },
+  { m: 2, q: "Un pasivo financiero debe ser dado de baja cuando:", a: "Se cancela la obligacion o cuando se preescribe o condona el compromiso", w: ["Se extingue por lo menos en un 75%", "Se extingue o se paga", "Ninguna de las anteriores"] },
+  { m: 2, q: "Según las Normativa Internacionales de Informacion Financiera, el Estado integral de Resultados en su segunda parte denominada Otro resultados Integrales contiene partidas tales como:", a: "Ajustes y Reservas no distribuibles", w: ["Activos y pasivos financieros medidos al costo amortizado", "Gastos Comerciales", "Ninguna de las anteriores"] },
+  { m: 2, q: "Segun las NIIF, se define el valor razonable como:", a: "El precio que sería recibido por vender un activo o pagado por transferir un pasivo en una transaccion, ordenada entre participantes del mercado a una fecha de medicion determinada", w: ["El precio que sería percibido por vender un acivo o tranferir un pasivo o valor estipulado por una tasación al momento de la medición", "La diferencia entre un precio pagado por vender un activo y el pagado por cancelar un pasivo", "Ninguna de las anteriores"] },
+  { m: 2, q: "¿Qué es la Memoria de los Estados Contables?", a: "Es un documento donde se detallan logros, resultados, hechos, y objetivos de interés para los accionistas de una empresa.", w: ["Es un documento que detalla que ha pasado en la compañia en ejercicio bajo analisis y que se espera para el próximo ejercicio", "Es un detalle pormenorizado de las acciones pasadas en la empresa", "Ninguna de las anteriores"] },
+  { m: 2, q: "Cuales son los componentes de un Estado de Resultados Integral?", a: "El Estado de Resultados (distribuible) y Otro Resultado Integral (reservas no distribuible)", w: ["Resultado ordinarios y Resultados extraordinarios", "No tienen componentes", "Ninguna de las anteriores"] },
+  { m: 2, q: "Segun las NIIF, El Estado Integral de Resultados en su segunda parte denominada Otros Resultados", a: "Diferencias de cambios de saldos finales de creditos y debitos en moneda extranjera al cierre del periodo", w: ["Gastos comerciales", "Activos y pasivos financieros medidos a costo de amortizacion", "Ninguna de las anteriores"] },
+  { m: 4, q: "¿A cual de las siguientes alternativas se asimila el ingreso de fondos que puede obtener el inversor que realizo un lanzamiento cubierto por Opciones?", a: "A la venta de un put", w: ["A la compra de un call", "A la compra de un put", "A la venta a plazo Grme"] },
+  { m: 4, q: "¿Qué es un ADR?", a: "Titulo respaldatorio de acciones extranjeras en un banco americano que cotizan en USA", w: ["Argentinian Depositary Receiptes donde se negocian acciones Argentinas", "Titulos que tienen como subyacentes CEDEARS", "Certificado de acciones americanas que cotizan en Argentina"] },
+  { m: 4, q: "Una diferencia entre un Pase y una Caucion es que...", a: "En la Caucion el titular no pierde la propiedad de los titulos mientras que en el Pase, si", w: ["En la Causion el titular pierde la propiedad de los titulos mientras que en el Pase, no", "Ambos pierden la titularidad de los activos", "Ninguno pierde la titularidad de los activos"] },
+  { m: 4, q: "Una ON Pyme puede ser suscripta por:", a: "Inversores Calificados y si esta avalada por SGR tambien los no calificados", w: ["Inversores Institucionales", "Inversores no Calificados", "Cualquier clase de inversor"] },
+  { m: 4, q: "Los especuladores", a: "Asumen riesgos para obtener ganancias pero tambien le aportan liquidez al mercado para sincerar precios", w: ["Dañan al mercado por sus conductas muchas veces irracionales", "No asumen riesgos y sacan un beneficio facil", "Asumen riesgos para obtener ganancias, pero no aportan liquidez al mercado"] },
+  { m: 4, q: "Los intereses de una Caución tomadora...¿cuando se pagan?", a: "Al inicio de la operación", w: ["Al vencimiento", "Lo define el acreedor", "Ninguna de las anteriores es correcta"] },
+  { m: 4, q: "Las Operaciones a Plazo...¿pueden ser canceladas anticipadamente?", a: "Sí, puede hacerlo el deudor y se paga el interés pactado del plazo", w: ["No, no se puede", "Sí, puede hacerlo el deudor y pasa el interés proporcional", "Sí, puede acerlo unicamente el acreedor"] },
+  { m: 4, q: "Calcular el precio de un bono cupón cero VN 100 a 10 años con tasa del 8%.", a: "$46", w: ["$100", "$82", "$54"] },
+  { m: 4, q: "A largo plazo, cualquier bono converge a su...", a: "Valor par", w: ["Valor nominal", "Valor tecnico", "Valor corriente"] },
+  { m: 4, q: "Los CPD avalados son garantizados por", a: "SGR", w: ["Gran empresa listada", "Fondo de garantia del mercado", "CNV"] },
+  { m: 4, q: "Un aumento en el precio de una Opción (calla y put) americana puede deberse a:", a: "Un aumento en la volatilidad", w: ["A una suba en el precio del ejercicio", "Una baja del activo subyacente", "Una reducción en la volatilidad"] },
+  { m: 4, q: "A mayor precio de ejercicio:", a: "Mayor sera el precio de la prima de una opción Put", w: ["Menor sera el precio de la prima de una opción Put", "Ninguna de las anteriores", "Mayor sera el precio de la prima de una opción Call"] },
+  { m: 4, q: "Spot(precio contado) soja 350, precio depósito mensual de la soja 10, TEM USD 3% precio futuro a 30 días 370 USD. ¿Decuánto es el desarbitraje?", a: "370.5>370 Futuro", w: ["370=370 Futuro", "369<370 Futuro", "369.5<370 futuro"] },
+  { m: 4, q: "¿Cuál es la diferencia fundamental entre un Futuro y un Forward?", a: "El Futuro tiene contraparte y el Forward no", w: ["El futuro es estandarizado y el Forward no", "El futuro siempre liquida por diferencia de precios y el Forward no necesariamente", "Las cotizacionees de Futuros son transparentes y los Forward no"] },
+  { m: 4, q: "El vendedor de una opción de venta americana:", a: "Está obligado a comprar al precio de ejercicio en cualquie fecha hasta el vencimiento", w: ["Está obligado a vender al precio de ejercicio Gjado en cualquier fecha hasta el vencimiento", "Está obligado a vender al precio de ejercicio en la fecha de vencimimiento", "Ninguna de las anteriores"] },
+  { m: 4, q: "Al vencimiento de una caución, el tomador paga:", a: "El valor aforado de la garantía más los intereses", w: ["El valor aforado de la garantía", "El valor aforado de la garantía más los gastos", "Ninguna de las anteriores"] },
+  { m: 4, q: "Cómo se valoriza la garantía de los valores puestos en garantía en una caución?", a: "Al último precio de cierre de liquidar contado normal", w: ["Al último precio de cierre de liquidar efectivo", "Al último precio de cierre que determine el mercado", "Ninguna de las anteriores"] },
+  { m: 4, q: "La negociación de cheques de pago diferido no está comprendida en la Ley 26831:", a: "Falso", w: ["Verdadero", "No aplica, la ley no menciona cheques", "Depende del tipo de cheque"] },
+  { m: 4, q: "En un aumento de capital por suscripción a razón de 0.50 acciones nuevas por cada una tenencia actual, con una prima de 0.45, si el ultimo precio antes del inicio del periodo de suscripción es de 1.50, el precio del derecho de suscripción será:", a: "$0.0333", w: ["$0.0167", "$0.05", "Ninguna de las anteriores"] },
+  { m: 4, q: "En una suscripción de acciones por subasta, con un precio de corte de $2.10 corresponde asignar 300 acciones a ese valor. Se recibieron tres ofertas a ese precio: A. 300 acciones; B. 50 acciones y C 250 acciones. La asignación final para estos tres inversores fue la siguiente:", a: "A 150 acciones, B 25 acciones. C 125", w: ["A 300 acciones, B y C 0 acciones", "A,B y A 100 acciones cada uno", "Ninguna de las anteriores"] },
+  { m: 4, q: "Si aumenta un 200% el capital y los accionistas habían suscripto sus acciones por $1.2 c/acción y hoy valen $1.8, ¿cuánto deben abonar?", a: "0,3", w: ["0,1", "0,2", "Ninguna de las anteriores"] },
+  { m: 4, q: "En un aumento del 100% por suscripción, con una prima de $2, si el último precio antes del inicio de suscripción es de $4, el precio de paridad será:", a: "$3", w: ["$3,5", "$2", "Ninguna de las anteriores"] },
+  { m: 4, q: "Bono con pago anual de cupones de $100, VN 1000, vencimiento 4 años y TIR del 12%. Calcule el rendimiento actual (o current yield) del bono:", a: "10.65%", w: ["9%", "10.35%", "Ninguna de las anteriores"] },
+  { m: 1, q: "Se considera abuso de informacion privilegiada como agravante cuando la conducta irregular es realizada por:", a: "El accionista mayoritario", w: ["Idoneos registrados", "Auditor externo", "Todas las anteriores"] },
+  { m: 1, q: "Cual es el rol del Comite de Auditoria", a: "Controlar tareas del directorio", w: ["Reportar a la CNV", "Reportar a los accionistas", "Todas las anteriores"] },
+  { m: 1, q: "Si la CNV declara irregular a los actos administrativos sometidos a control, significa que:", a: "La nulidad del acto irregular. y por lo tanto la suspension de sus efectos.", w: ["La falta de registracion del acto irregular, y por lo tanto el agente es suspendido.", "La falta de registracion del acto irregular, y por lo tanto su inoponibilidad a terceros.", "Todas las anteriores"] },
+  { m: 1, q: "La competencia de la CNV recae sobre:", a: "Mercados, Agentes y demas personas físicas no juridicas que realicen actividades vinculadas al mercado de capitales", w: ["Mercados y estos sobre sus agentes", "Mercados y agentes", "Todas las anteriores"] },
+  { m: 1, q: "La existencia de causas ante la justicia con competencia en lo criminal con respecto a conductas descriptas en la Ley de Mercado de Capitales 26831 y que pudieran tambien dar lugar a condenas en esta sede:", a: "No obstará a la prosecución y conclusión del trámite de los sumarios respectivos en la Comisión Nacional de Valores", w: ["Obstara a la prosecucion y conclusion del tramite de los sumarios respectivos en la CNV, salvo que mediante resolucion fundada de dicho Organismo se resolviera lo contrario.", "Obstara a la prosecucion y conclusion del tramite de los sumarios respectivos ante la CNV", "Ninguna de las anteriores"] },
+  { m: 1, q: "Empresa que emite ON para aplicar a la adquisicion de activos intangibles en el páis, ¿El destino de la empresa cumple con los destinos admitidos por la Ley de Obligaciones Negociables para gozar de los beneficios impositivos?", a: "No, porque no se cumple con los destinos admitidos por la Ley ON", w: ["Si, porque los fondos se destinan a activos físicos situados en el pais", "Si, porque los fondos se destinan al capital de trabajo en el pais.", "Ninguna de las anteriores"] },
+  { m: 1, q: "Los valores emitidos bajo el regimen PYME CNV, solo podran ser adquiridos por los inversores calificados, entre los que se encuentran...", a: "Personas juridicas constituidas en el exterior y personas físicas con domicilio fuera del pais.", w: ["Personas físicas con domicilio real fuera del pais, con un PN superior a $1M", "Personas juridicas constituidas en el exterior y personas físicas con domicilio real dentro del pais con un PN inferior a 1M", "Ninguna de las anteriores"] },
+  { m: 1, q: "Precio de una OPA obligatoria como consecuencia de la adquisicion de una participacion significativa.", a: "Al precio que determine el oferente pero teniendo en cuenta ciertos limites", w: ["Al precio que determine el oferente sin excepciones", "Al precio establecido por un evaluador intependiente registrado ante la CNV", "Ninguna de las anteriores"] },
+  { m: 1, q: "La CNV tiene la funcion de:", a: "Declarar la irregularidad e ineOcacia sin sumario previa a los efectos administrativos.", w: ["Declarar la irregularidad e ineOcacia sin sumario previa a los efectos judiciales.", "Declarar la irregularidad e ineOcacia consumario previa a los efectos administrativos", "Ninguna de las anteriores"] },
+  { m: 1, q: "Una empresa que cotiza acciones en el mercado es notificada con fecha 15/2/2016 sobre una demanda por parte de una asociacion que le reclama un exceso de facturacion aproximadamente del 5% de los minutos de conexion de cada cliente. Demanda que devuelva ese dinero. La demanda no menciona un monto especifico pero los abogados consideran que podria ser perjudicial para la empresa y calculan un monto que no superara $1.000.000. El 30/6/2016 se resuelve un fallo similar contra otra sociedad a traves de la Asociacion que es apelado y el 1/8/2016 la Camara confirma el fallo. La empresa, ¿debe comunicar el hecho como relevante?", a: "No hay que comunicarlo por no ser un hecho relevante", w: ["Si el 1/8/2016", "Si el 30/6/2016", "Ninguna de las anteriores"] },
+  { m: 1, q: "Toda negociación de instrumentos que, a criterio de la Comisión Nacional de Valores, comprenda características semejantes a la oferta pública definida en la presente ley se considerará como tal y se someterá a las normas de la BCBA", a: "Falso", w: ["Verdadero", "Depende de la norma aplicable", "Solo aplica a mercados no regulados"] },
+  { m: 1, q: "Se entiende que se halla bajo control casi total:", a: "Toda sociedad anónima respecto de la cual otra persona humana o jurídica, ya sea en forma directa o a través de otra u otras sociedades a su vez controladas por ella, sea titular del noventa y cinco por ciento (95%) o más del capital suscripto", w: ["Toda sociedad anónima respecto de la cual una persona jurídica, ya sea en forma directa o a través de otra u otras sociedades a su vez controladas por ella, sea titular del noventa y cinco por ciento (95%) o más del capital suscripto", "Toda sociedad anónima respecto de la cual otra persona humana o jurídica, ya sea en forma directa o a través de otra u otras sociedades a su vez controladas por ella, sea titular del ochenta y cinco por ciento (85%) o más del capital suscripto", "Toda sociedad anónima respecto de la cual otra persona humana, ya sea en forma directa o a través de otra u otras sociedades a su vez controladas por ella, sea titular del noventa y ocho por ciento (98%) o más del capital suscripto"] }
+];
+
+// ===================== APP STATE =====================
+const MODULES = {
+  1: "Marco Normativo / OPA / CNV",
+  2: "FCI / Fideicomisos",
+  3: "Transparencia / Gobierno Corporativo",
+  4: "Instrumentos / ON",
+  5: "Agentes / Operaciones / Derivados",
+  6: "Prevención Lavado / Ética"
+};
+
+let selectedModules = new Set([1,2,3,4,5,6]);
+let numQuestions = 30;
+let quizQuestions = [];
+let currentIdx = 0;
+let answers = {}; // idx -> {selected, correct}
+let timerInterval = null;
+let timeLeft = 0;
+let skipped = new Set();
+
+// ===================== INIT =====================
+function init() {
+  const grid = document.getElementById('module-grid');
+  const allCard = document.getElementById('all-card');
+  
+  // Count per module
+  const counts = {};
+  ALL_QUESTIONS.forEach(q => { counts[q.m] = (counts[q.m]||0)+1; });
+  const total = ALL_QUESTIONS.length;
+  document.getElementById('all-count').textContent = `${total} preguntas en total`;
+
+  // Insert module cards before all-card
+  for (let m = 1; m <= 6; m++) {
+    const card = document.createElement('div');
+    card.className = 'module-card active';
+    card.id = `mod-card-${m}`;
+    card.onclick = () => toggleModule(m);
+    card.innerHTML = `
+      <div class="module-num">MÓDULO ${m}</div>
+      <div class="module-title">${MODULES[m]}</div>
+      <div class="module-count">${counts[m]||0} preguntas</div>
+    `;
+    grid.insertBefore(card, allCard);
+  }
+  updateStartBtn();
+}
+
+function toggleModule(m) {
+  if (selectedModules.has(m)) {
+    selectedModules.delete(m);
+    document.getElementById(`mod-card-${m}`).classList.remove('active');
+  } else {
+    selectedModules.add(m);
+    document.getElementById(`mod-card-${m}`).classList.add('active');
+  }
+  updateStartBtn();
+}
+
+function toggleAll() {
+  if (selectedModules.size === 6) {
+    selectedModules.clear();
+    for(let m=1;m<=6;m++) document.getElementById(`mod-card-${m}`).classList.remove('active');
+  } else {
+    selectedModules = new Set([1,2,3,4,5,6]);
+    for(let m=1;m<=6;m++) document.getElementById(`mod-card-${m}`).classList.add('active');
+  }
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  const pool = ALL_QUESTIONS.filter(q => selectedModules.has(q.m));
+  const btn = document.getElementById('start-btn');
+  btn.disabled = pool.length === 0;
+  if (pool.length > 0) {
+    btn.textContent = `▶ COMENZAR SIMULACRO (${Math.min(numQuestions, pool.length)} preguntas)`;
+  } else {
+    btn.textContent = '⚠ Seleccioná al menos un módulo';
+  }
+}
+
+function changeQty(delta) {
+  numQuestions = Math.max(5, Math.min(80, numQuestions + delta));
+  document.getElementById('qty-display').textContent = numQuestions;
+  updateStartBtn();
+}
+
+// ===================== QUIZ =====================
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const pool = ALL_QUESTIONS.filter(q => selectedModules.has(q.m));
+  quizQuestions = shuffle(pool).slice(0, numQuestions);
+  currentIdx = 0;
+  answers = {};
+  skipped = new Set();
+
+  const totalSecs = quizQuestions.length * 90; // 90s per question
+  timeLeft = totalSecs;
+
+  showScreen('quiz-screen');
+  document.getElementById('q-total').textContent = quizQuestions.length;
+  renderQuestion();
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      showResults();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft/60);
+  const s = timeLeft % 60;
+  const el = document.getElementById('timer');
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className = 'timer-display';
+  if (timeLeft <= 120) el.classList.add('danger');
+  else if (timeLeft <= 300) el.classList.add('warning');
+}
+
+function renderQuestion() {
+  const q = quizQuestions[currentIdx];
+  document.getElementById('q-counter').textContent = currentIdx + 1;
+  const pct = (currentIdx / quizQuestions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  // Shuffle options
+  const opts = shuffle([q.a, ...q.w]);
+  const answered = answers[currentIdx];
+
+  let optionsHtml = opts.map((opt, i) => {
+    const letters = ['A','B','C','D'];
+    let cls = 'option-item';
+    if (answered !== undefined) {
+      cls += ' disabled';
+      if (opt === q.a) cls += ' correct';
+      else if (opt === answered.selected && opt !== q.a) cls += ' wrong';
+    }
+    const onClick = answered !== undefined ? '' : `onclick="selectAnswer(${i})"`;
+    return `<li class="${cls}" ${onClick} data-opt="${encodeURIComponent(opt)}">
+      <span class="option-letter">${letters[i]}</span>
+      <span>${opt}</span>
+    </li>`;
+  }).join('');
+
+  let feedbackHtml = '';
+  if (answered !== undefined) {
+    if (answered.correct) {
+      feedbackHtml = `<div class="feedback-box correct-fb">✓ ¡Correcto! Esa es la respuesta según la guía CNV.</div>`;
+    } else {
+      feedbackHtml = `<div class="feedback-box wrong-fb">✗ Incorrecto. La respuesta correcta es: <strong>${q.a}</strong></div>`;
+    }
+  }
+
+  const isLast = currentIdx === quizQuestions.length - 1;
+  const navHtml = answered !== undefined 
+    ? `<div class="nav-row">
+        <button class="nav-btn" onclick="prevQuestion()" ${currentIdx===0?'disabled':''}>← Anterior</button>
+        <button class="nav-btn primary" onclick="${isLast ? 'showResults()' : 'nextQuestion()'}">
+          ${isLast ? 'Ver Resultados ✓' : 'Siguiente →'}
+        </button>
+      </div>`
+    : `<div class="nav-row">
+        <button class="nav-btn" onclick="prevQuestion()" ${currentIdx===0?'disabled':''}>← Anterior</button>
+      </div>`;
+
+  document.getElementById('question-area').innerHTML = `
+    <div class="question-card">
+      <div>
+        <span class="q-number">PREGUNTA ${currentIdx+1}/${quizQuestions.length}</span>
+        <span class="q-module-tag">MÓDULO ${q.m}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <ul class="options-list">${optionsHtml}</ul>
+      ${feedbackHtml}
+    </div>
+    ${navHtml}
+  `;
+
+  // Store opts order for selectAnswer
+  window._currentOpts = opts;
+
+  // Show/hide skip
+  document.getElementById('skip-btn').style.display = answered !== undefined ? 'none' : 'block';
+}
+
+function selectAnswer(idx) {
+  if (answers[currentIdx] !== undefined) return;
+  const q = quizQuestions[currentIdx];
+  const selected = window._currentOpts[idx];
+  const correct = selected === q.a;
+  answers[currentIdx] = { selected, correct };
+  renderQuestion();
+}
+
+function nextQuestion() {
+  if (currentIdx < quizQuestions.length - 1) {
+    currentIdx++;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function prevQuestion() {
+  if (currentIdx > 0) {
+    currentIdx--;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function skipQuestion() {
+  skipped.add(currentIdx);
+  if (currentIdx < quizQuestions.length - 1) {
+    nextQuestion();
+  } else {
+    // Find first unanswered
+    const first = quizQuestions.findIndex((_, i) => answers[i] === undefined);
+    if (first >= 0) {
+      currentIdx = first;
+      renderQuestion();
+    } else {
+      showResults();
+    }
+  }
+}
+
+// ===================== RESULTS =====================
+function showResults() {
+  clearInterval(timerInterval);
+
+  const total = quizQuestions.length;
+  let correct = 0;
+  let wrong = 0;
+  let unanswered = 0;
+
+  quizQuestions.forEach((_, i) => {
+    if (answers[i] === undefined) unanswered++;
+    else if (answers[i].correct) correct++;
+    else wrong++;
+  });
+
+  const pct = Math.round((correct / total) * 100);
+  const passed = pct >= 70;
+
+  document.getElementById('score-pct').textContent = pct + '%';
+  document.getElementById('score-pct').style.color = passed ? 'var(--green)' : 'var(--red)';
+  
+  const circle = document.getElementById('score-circle');
+  circle.style.setProperty('--pct', pct + '%');
+  circle.style.setProperty('--accent-color', passed ? 'var(--green)' : 'var(--red)');
+
+  document.getElementById('score-verdict').textContent = pct >= 80 ? '🎉 ¡Excelente!' : pct >= 70 ? '✓ Aprobado' : '✗ A seguir estudiando';
+  document.getElementById('score-verdict').style.color = pct >= 70 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('score-detail').textContent = `${correct} correctas de ${total} preguntas`;
+
+  document.getElementById('stat-correct').textContent = correct;
+  document.getElementById('stat-wrong').textContent = wrong;
+  document.getElementById('stat-skipped').textContent = unanswered;
+
+  // Build review
+  const reviewEl = document.getElementById('review-list');
+  const wrongItems = quizQuestions.map((q, i) => ({q, i, ans: answers[i]})).filter(x => !x.ans || !x.ans.correct);
+
+  if (wrongItems.length === 0) {
+    reviewEl.innerHTML = `<div style="color:var(--green);font-size:13px;padding:16px 0">¡Respondiste todo correctamente! 🎯</div>`;
+  } else {
+    reviewEl.innerHTML = wrongItems.map(({q, i, ans}) => `
+      <div class="review-item">
+        <div class="review-q">${i+1}. ${q.q}</div>
+        <div class="review-answers">
+          ${ans ? `<div class="review-wrong">✗ Tu respuesta: ${ans.selected}</div>` : '<div class="review-wrong">— Sin responder</div>'}
+          <div class="review-right">✓ Correcta: ${q.a}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  showScreen('results-screen');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToMenu() {
+  clearInterval(timerInterval);
+  showScreen('menu-screen');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Start
+init();
+</script>
+
+  <!-- ── CAFECITO FOOTER ── -->
+  <footer style="text-align:center; padding: 32px 20px 40px; margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.07);">
+    <p style="color: rgba(255,255,255,0.45); font-size: 13px; margin: 0 0 14px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.03em;">
+      ¿Te fue útil el simulador? Podés invitarme un café ☕
+    </p>
+    <a href="https://cafecito.app/octavioesc" target="_blank" rel="noopener noreferrer"
+       style="display:inline-flex; align-items:center; gap:8px; background:#7B3FF2; color:#fff;
+              text-decoration:none; font-family:'Syne',sans-serif; font-weight:700; font-size:14px;
+              padding:10px 22px; border-radius:8px; letter-spacing:0.04em;
+              transition: opacity 0.2s; opacity:1;"
+       onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+      ☕ Invitarme un Cafecito
+    </a>
+    <p style="color: rgba(255,255,255,0.2); font-size: 11px; margin: 16px 0 0; font-family: 'IBM Plex Mono', monospace;">
+      Simulador CNV Idoneidad — 345 preguntas de exámenes reales
+    </p>
+  </footer>
+
+</body>
+</html>
