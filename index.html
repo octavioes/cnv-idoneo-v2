@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador Examen Idoneidad CNV</title>
+  <meta name="description" content="Practicá para el examen de idoneidad de la CNV en Argentina con simulacros por módulo, corrección inmediata y resultados al instante.">
+  <link rel="canonical" href="https://idoneocnv.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:site_name" content="Idóneo CNV">
+  <meta property="og:title" content="Simulador Examen Idoneidad CNV">
+  <meta property="og:description" content="Simulador de práctica para el examen de idoneidad de la CNV en Argentina.">
+  <meta property="og:url" content="https://idoneocnv.com/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Simulador Examen Idoneidad CNV">
+  <meta name="twitter:description" content="Practicá con simulacros por módulo para el examen de idoneidad de la CNV.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-5WYE2QXK6E"></script>
   <script>
@@ -10,9 +26,7 @@
     gtag('config', 'G-5WYE2QXK6E');
   </script>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAuElEQVR4nGNkQAJCQnL/GegA3r17xAhjM9HbcnS7mOhtObojGAfCcmTARFjJqAPwgxiPBQwxHgsGxgGnDjykRDsDAwMDAwu1DCZGj5mDPIbYgKcBrCEAA3WV00/ikmtqzzQnVj02tUQ5AJ9GaqhnYBiNgtEoGARRgFEbkloITerYz8DAwMCQV+FIlHr0wmjAo2DUAaMOGHXAaKt41AFMyB1FeoN37x4xMsEYA2E5AwNSFNDTEch2AQCQNUyMm8M0PQAAAABJRU5ErkJggg==">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Simulador Examen Idoneidad CNV</title>
+
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -141,6 +155,12 @@
 
   .module-card:hover::before { transform: scaleY(1); }
 
+  .module-card:focus-visible,
+  .option-item:focus-visible {
+    outline: 2px solid var(--accent2);
+    outline-offset: 2px;
+  }
+
   .module-card.active {
     border-color: var(--accent);
     background: var(--surface2);
@@ -190,7 +210,7 @@
 
   .config-title {
     font-family: 'Syne', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--accent2);
@@ -209,7 +229,7 @@
     background: var(--surface2);
     border: 1px solid var(--border);
     color: var(--text);
-    width: 36px; height: 36px;
+    width: 44px; height: 44px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 18px;
@@ -271,7 +291,7 @@
     color: rgba(255,255,255,0.35);
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
-    padding: 4px 12px;
+    padding: 10px 14px;
     border-radius: 4px;
     cursor: pointer;
     letter-spacing: 0.05em;
@@ -363,7 +383,7 @@
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 14px 18px;
+    padding: 16px 18px;
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
@@ -382,7 +402,7 @@
   .option-letter {
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     min-width: 20px;
     margin-top: 1px;
@@ -421,7 +441,7 @@
 
   .feedback-box {
     margin-top: 16px;
-    padding: 14px 18px;
+    padding: 16px 18px;
     border-radius: 6px;
     font-size: 13px;
     line-height: 1.6;
@@ -481,10 +501,10 @@
     background: transparent;
     border: none;
     color: var(--muted);
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     font-family: 'IBM Plex Mono', monospace;
-    padding: 8px;
+    padding: 12px;
     text-decoration: underline;
     text-align: center;
     display: block;
@@ -592,7 +612,7 @@
 
   .review-title {
     font-family: 'Syne', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--accent2);
@@ -665,10 +685,276 @@
   /* Module selector toggle */
   .module-card input[type="checkbox"] { display: none; }
 
+  @media (max-width: 860px) {
+    .container {
+      padding: 18px 16px 40px;
+    }
+
+    .header {
+      padding: 28px 0 24px;
+    }
+
+    .header h1 {
+      letter-spacing: 2px;
+    }
+
+    .menu-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .config-section,
+    .question-card,
+    .stat-card,
+    .review-item {
+      border-radius: 10px;
+    }
+
+    .config-section,
+    .question-card {
+      padding: 20px;
+    }
+
+    .quiz-header {
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .quiz-meta,
+    .timer-display,
+    .cancel-btn {
+      width: 100%;
+    }
+
+    .quiz-meta {
+      order: 1;
+      text-align: center;
+    }
+
+    .timer-display {
+      order: 2;
+      text-align: center;
+      font-size: 26px;
+      padding: 10px 14px;
+      background: rgba(17,24,39,0.88);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .cancel-btn {
+      order: 3;
+      justify-content: center;
+    }
+
+    .q-text {
+      line-height: 1.45;
+    }
+
+    .option-item {
+      min-height: 56px;
+      font-size: 14px;
+    }
+
+    .feedback-box,
+    .nav-btn,
+    .action-btn {
+      font-size: 14px;
+    }
+
+    .score-hero {
+      padding: 28px 0 22px;
+    }
+
+    .score-detail {
+      max-width: 28ch;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .review-title {
+      line-height: 1.4;
+    }
+  }
+
   @media (max-width: 600px) {
-    .stats-grid { grid-template-columns: repeat(3, 1fr); }
-    .quiz-header { flex-direction: column; gap: 8px; align-items: flex-start; }
-    .nav-row { flex-direction: column; }
+    body::before {
+      background-size: 28px 28px;
+    }
+
+    .container {
+      padding: 14px 12px 32px;
+    }
+
+    .header {
+      padding: 18px 0 18px;
+    }
+
+    .header h1 {
+      font-size: clamp(24px, 9vw, 34px);
+      letter-spacing: 1.5px;
+    }
+
+    .header p {
+      font-size: 12px;
+      line-height: 1.6;
+      max-width: 32ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .config-section {
+      padding: 16px;
+      margin: 14px 0;
+    }
+
+    .config-title,
+    .review-title {
+      letter-spacing: 1.4px;
+      font-size: 11px;
+    }
+
+    .config-row {
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .qty-display {
+      min-width: 42px;
+      font-size: 26px;
+    }
+
+    .qty-label {
+      width: 100%;
+      text-align: center;
+    }
+
+    .start-btn {
+      padding: 15px 14px;
+      font-size: 14px;
+      line-height: 1.35;
+      letter-spacing: 0.6px;
+    }
+
+    .quiz-header {
+      flex-direction: column;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+    }
+
+    .cancel-btn,
+    .nav-btn,
+    .action-btn {
+      min-height: 48px;
+    }
+
+    .progress-bar {
+      margin-bottom: 18px;
+    }
+
+    .question-card {
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .q-number,
+    .q-module-tag {
+      display: block;
+      margin-left: 0;
+      width: fit-content;
+    }
+
+    .q-module-tag {
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+
+    .q-text {
+      font-size: 16px;
+    }
+
+    .options-list {
+      margin-top: 16px;
+      gap: 8px;
+    }
+
+    .option-item {
+      padding: 14px;
+      gap: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      transform: none;
+    }
+
+    .option-item:hover:not(.disabled) {
+      transform: none;
+    }
+
+    .feedback-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      font-size: 12px;
+    }
+
+    .nav-row,
+    .action-buttons {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .skip-btn {
+      margin-top: 2px;
+      padding: 14px 10px;
+    }
+
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 18px;
+    }
+
+    .score-circle-inner {
+      width: 108px;
+      height: 108px;
+    }
+
+    .score-pct {
+      font-size: 30px;
+    }
+
+    .score-verdict {
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .stat-card {
+      padding: 14px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .review-section {
+      margin-top: 24px;
+    }
+
+    .review-item {
+      padding: 14px;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .module-card:hover,
+    .option-item:hover:not(.disabled) {
+      transform: none;
+    }
   }
 </style>
 </head>
@@ -685,7 +971,7 @@
     <div class="config-section">
       <div class="config-title">Seleccioná los módulos</div>
       <div class="menu-grid" id="module-grid">
-        <div class="module-card all-card" onclick="toggleAll()" id="all-card">
+        <div class="module-card all-card active" onclick="toggleAll()" onkeydown="handleActionKey(event, toggleAll)" id="all-card" role="button" tabindex="0" aria-pressed="true">
           <div class="module-num">TODOS LOS MÓDULOS</div>
           <div class="module-title">Examen Completo</div>
           <div class="module-count" id="all-count"></div>
@@ -1147,7 +1433,11 @@ function init() {
     const card = document.createElement('div');
     card.className = 'module-card active';
     card.id = `mod-card-${m}`;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-pressed', 'true');
     card.onclick = () => toggleModule(m);
+    card.onkeydown = (event) => handleActionKey(event, () => toggleModule(m));
     card.innerHTML = `
       <div class="module-num">MÓDULO ${m}</div>
       <div class="module-title">${MODULES[m]}</div>
@@ -1155,7 +1445,29 @@ function init() {
     `;
     grid.insertBefore(card, allCard);
   }
+  syncModuleSelectionState();
   updateStartBtn();
+}
+
+function handleActionKey(event, action) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    action();
+  }
+}
+
+function syncModuleSelectionState() {
+  for (let m = 1; m <= 6; m++) {
+    const card = document.getElementById(`mod-card-${m}`);
+    if (card) {
+      card.setAttribute('aria-pressed', String(selectedModules.has(m)));
+    }
+  }
+
+  const allCard = document.getElementById('all-card');
+  const allSelected = selectedModules.size === 6;
+  allCard.classList.toggle('active', allSelected);
+  allCard.setAttribute('aria-pressed', String(allSelected));
 }
 
 function toggleModule(m) {
@@ -1166,6 +1478,7 @@ function toggleModule(m) {
     selectedModules.add(m);
     document.getElementById(`mod-card-${m}`).classList.add('active');
   }
+  syncModuleSelectionState();
   updateStartBtn();
 }
 
@@ -1177,6 +1490,7 @@ function toggleAll() {
     selectedModules = new Set([1,2,3,4,5,6]);
     for(let m=1;m<=6;m++) document.getElementById(`mod-card-${m}`).classList.add('active');
   }
+  syncModuleSelectionState();
   updateStartBtn();
 }
 
@@ -1184,6 +1498,7 @@ function updateStartBtn() {
   const pool = ALL_QUESTIONS.filter(q => selectedModules.has(q.m));
   const btn = document.getElementById('start-btn');
   btn.disabled = pool.length === 0;
+  btn.setAttribute('aria-disabled', String(pool.length === 0));
   if (pool.length > 0) {
     btn.textContent = `▶ COMENZAR SIMULACRO (${Math.min(numQuestions, pool.length)} preguntas)`;
   } else {
@@ -1250,7 +1565,7 @@ function updateTimerDisplay() {
 function renderQuestion() {
   const q = quizQuestions[currentIdx];
   document.getElementById('q-counter').textContent = currentIdx + 1;
-  const pct = (currentIdx / quizQuestions.length) * 100;
+  const pct = ((currentIdx + 1) / quizQuestions.length) * 100;
   document.getElementById('progress-fill').style.width = pct + '%';
 
   // Shuffle options (stable per question)
@@ -1268,8 +1583,10 @@ function renderQuestion() {
       if (opt === q.a) cls += ' correct';
       else if (opt === answered.selected && opt !== q.a) cls += ' wrong';
     }
-    const onClick = answered !== undefined ? '' : `onclick="selectAnswer(${i})"`;
-    return `<li class="${cls}" ${onClick} data-opt="${encodeURIComponent(opt)}">
+    const interactionAttrs = answered !== undefined
+      ? 'tabindex="-1" role="button" aria-disabled="true"'
+      : `onclick="selectAnswer(${i})" onkeydown="handleOptionKey(event, ${i})" tabindex="0" role="button" aria-disabled="false"`;
+    return `<li class="${cls}" ${interactionAttrs} data-opt="${encodeURIComponent(opt)}">
       <span class="option-letter">${letters[i]}</span>
       <span>${opt}</span>
     </li>`;
@@ -1321,8 +1638,16 @@ function selectAnswer(idx) {
   const q = quizQuestions[currentIdx];
   const selected = window._currentOpts[idx];
   const correct = selected === q.a;
+  skipped.delete(currentIdx);
   answers[currentIdx] = { selected, correct };
   renderQuestion();
+}
+
+function handleOptionKey(event, idx) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    selectAnswer(idx);
+  }
 }
 
 function nextQuestion() {
@@ -1384,6 +1709,7 @@ function showResults() {
     else wrong++;
   });
 
+  const skippedUnanswered = [...skipped].filter(i => answers[i] === undefined).length;
   const pct = Math.round((correct / total) * 100);
   const passed = pct >= 70;
 
@@ -1396,11 +1722,11 @@ function showResults() {
 
   document.getElementById('score-verdict').textContent = pct >= 80 ? '🎉 ¡Excelente!' : pct >= 70 ? '✓ Aprobado' : '✗ A seguir estudiando';
   document.getElementById('score-verdict').style.color = pct >= 70 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('score-detail').textContent = `${correct} correctas de ${total} preguntas`;
+  document.getElementById('score-detail').textContent = `${correct} correctas de ${total} preguntas${unanswered ? ` · ${unanswered} sin responder` : ''}`;
 
   document.getElementById('stat-correct').textContent = correct;
   document.getElementById('stat-wrong').textContent = wrong;
-  document.getElementById('stat-skipped').textContent = unanswered;
+  document.getElementById('stat-skipped').textContent = skippedUnanswered;
 
   // Build review
   const reviewEl = document.getElementById('review-list');
