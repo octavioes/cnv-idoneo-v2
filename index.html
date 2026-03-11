@@ -1412,6 +1412,7 @@ let numQuestions = 30;
 let quizQuestions = [];
 let currentIdx = 0;
 let answers = {};
+let pendingSelections = {};
 let optOrders = {}; // idx -> {selected, correct}
 let timerInterval = null;
 let timeLeft = 0;
@@ -1527,6 +1528,7 @@ function startQuiz() {
   quizQuestions = shuffle(pool).slice(0, numQuestions);
   currentIdx = 0;
   answers = {};
+  pendingSelections = {};
   optOrders = {};
   skipped = new Set();
 
@@ -1574,6 +1576,7 @@ function renderQuestion() {
   }
   const opts = optOrders[currentIdx];
   const answered = answers[currentIdx];
+  const pendingSelection = pendingSelections[currentIdx];
 
   let optionsHtml = opts.map((opt, i) => {
     const letters = ['A','B','C','D'];
@@ -1582,6 +1585,8 @@ function renderQuestion() {
       cls += ' disabled';
       if (opt === q.a) cls += ' correct';
       else if (opt === answered.selected && opt !== q.a) cls += ' wrong';
+    } else if (opt === pendingSelection) {
+      cls += ' selected';
     }
     const interactionAttrs = answered !== undefined
       ? 'tabindex="-1" role="button" aria-disabled="true"'
@@ -1611,6 +1616,9 @@ function renderQuestion() {
       </div>`
     : `<div class="nav-row">
         <button class="nav-btn" onclick="prevQuestion()" ${currentIdx===0?'disabled':''}>← Anterior</button>
+        <button class="nav-btn primary" onclick="submitAnswer()" ${pendingSelection === undefined ? 'disabled' : ''}>
+          ${isLast ? 'Confirmar y ver resultados' : 'Confirmar respuesta'}
+        </button>
       </div>`;
 
   document.getElementById('question-area').innerHTML = `
@@ -1635,11 +1643,27 @@ function renderQuestion() {
 
 function selectAnswer(idx) {
   if (answers[currentIdx] !== undefined) return;
-  const q = quizQuestions[currentIdx];
   const selected = window._currentOpts[idx];
+
+  if (pendingSelections[currentIdx] === selected) {
+    delete pendingSelections[currentIdx];
+  } else {
+    pendingSelections[currentIdx] = selected;
+  }
+
+  renderQuestion();
+}
+
+function submitAnswer() {
+  if (answers[currentIdx] !== undefined) return;
+  const q = quizQuestions[currentIdx];
+  const selected = pendingSelections[currentIdx];
+  if (selected === undefined) return;
+
   const correct = selected === q.a;
   skipped.delete(currentIdx);
   answers[currentIdx] = { selected, correct };
+  delete pendingSelections[currentIdx];
   renderQuestion();
 }
 
@@ -1679,6 +1703,7 @@ function cancelDismiss() {
   document.getElementById('cancel-modal').style.display = 'none';
 }
 function skipQuestion() {
+  delete pendingSelections[currentIdx];
   skipped.add(currentIdx);
   if (currentIdx < quizQuestions.length - 1) {
     nextQuestion();
