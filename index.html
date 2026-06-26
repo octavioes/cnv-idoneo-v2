@@ -993,6 +993,16 @@
       </div>
     </div>
 
+    <div class="config-section">
+      <div class="config-title">Tiempo total</div>
+      <div class="config-row">
+        <button class="qty-btn" onclick="changeTime(-5)">−</button>
+        <div class="qty-display" id="time-display">45</div>
+        <button class="qty-btn" onclick="changeTime(5)">+</button>
+        <div class="qty-label">minutos para todo el examen</div>
+      </div>
+    </div>
+
     <button class="start-btn" id="start-btn" onclick="startQuiz()">▶ COMENZAR SIMULACRO</button>
   </div>
 
@@ -1804,6 +1814,8 @@ const MODULES = {
 
 let selectedModules = new Set();
 let numQuestions = 30;
+let examMinutes = 45;
+let examTotalSecs = examMinutes * 60;
 let quizQuestions = [];
 let currentIdx = 0;
 let answers = {};
@@ -1907,6 +1919,11 @@ function changeQty(delta) {
   updateStartBtn();
 }
 
+function changeTime(delta) {
+  examMinutes = Math.max(5, Math.min(120, examMinutes + delta));
+  document.getElementById('time-display').textContent = examMinutes;
+}
+
 // ===================== QUIZ =====================
 function shuffle(arr) {
   const a = [...arr];
@@ -1935,8 +1952,8 @@ function startQuiz() {
   optOrders = {};
   skipped = new Set();
 
-  const totalSecs = quizQuestions.length * 90; // 90s per question
-  timeLeft = totalSecs;
+  examTotalSecs = examMinutes * 60; // tiempo total fijo para todo el examen
+  timeLeft = examTotalSecs;
 
   showScreen('quiz-screen');
   document.getElementById('q-total').textContent = quizQuestions.length;
@@ -1963,8 +1980,9 @@ function updateTimerDisplay() {
   const el = document.getElementById('timer');
   el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   el.className = 'timer-display';
-  if (timeLeft <= 120) el.classList.add('danger');
-  else if (timeLeft <= 300) el.classList.add('warning');
+  // Umbrales relativos al tiempo total elegido: rojo ≤10%, amarillo ≤25%
+  if (timeLeft <= examTotalSecs * 0.10) el.classList.add('danger');
+  else if (timeLeft <= examTotalSecs * 0.25) el.classList.add('warning');
 }
 
 function renderQuestion() {
