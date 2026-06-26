@@ -1034,7 +1034,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-value" id="stat-skipped" style="color: var(--yellow)">0</div>
-        <div class="stat-label">SALTADAS</div>
+        <div class="stat-label">SIN RESPONDER</div>
       </div>
     </div>
 
@@ -1917,6 +1917,16 @@ function shuffle(arr) {
   return a;
 }
 
+// Escape user/content text before injecting into innerHTML (defense-in-depth XSS guard)
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function startQuiz() {
   const pool = ALL_QUESTIONS.filter(q => selectedModules.has(q.m));
   quizQuestions = shuffle(pool).slice(0, numQuestions);
@@ -1983,7 +1993,7 @@ function renderQuestion() {
       : `onclick="selectAnswer(${i})" onkeydown="handleOptionKey(event, ${i})" tabindex="0" role="button" aria-disabled="false"`;
     return `<li class="${cls}" ${interactionAttrs} data-opt="${encodeURIComponent(opt)}">
       <span class="option-letter">${letters[i]}</span>
-      <span>${opt}</span>
+      <span>${escapeHtml(opt)}</span>
     </li>`;
   }).join('');
 
@@ -1992,7 +2002,7 @@ function renderQuestion() {
     if (answered.correct) {
       feedbackHtml = `<div class="feedback-box correct-fb">✓ ¡Correcto! Esa es la respuesta según la guía CNV.</div>`;
     } else {
-      feedbackHtml = `<div class="feedback-box wrong-fb">✗ Incorrecto. La respuesta correcta es: <strong>${q.a}</strong></div>`;
+      feedbackHtml = `<div class="feedback-box wrong-fb">✗ Incorrecto. La respuesta correcta es: <strong>${escapeHtml(q.a)}</strong></div>`;
     }
   }
 
@@ -2014,7 +2024,7 @@ function renderQuestion() {
         <span class="q-number">PREGUNTA ${currentIdx+1}/${quizQuestions.length}</span>
         <span class="q-module-tag">MÓDULO ${q.m}</span>
       </div>
-      <div class="q-text">${q.q}</div>
+      <div class="q-text">${escapeHtml(q.q)}</div>
       <ul class="options-list">${optionsHtml}</ul>
       ${feedbackHtml}
     </div>
@@ -2078,11 +2088,13 @@ function skipQuestion() {
   if (currentIdx < quizQuestions.length - 1) {
     nextQuestion();
   } else {
-    // Find first unanswered
-    const first = quizQuestions.findIndex((_, i) => answers[i] === undefined);
-    if (first >= 0) {
-      currentIdx = first;
+    // On the last question: jump to another pending unanswered question,
+    // or finish the exam if this was the last one left.
+    const next = quizQuestions.findIndex((_, i) => i !== currentIdx && answers[i] === undefined);
+    if (next >= 0) {
+      currentIdx = next;
       renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       showResults();
     }
@@ -2104,7 +2116,6 @@ function showResults() {
     else wrong++;
   });
 
-  const skippedUnanswered = [...skipped].filter(i => answers[i] === undefined).length;
   const pct = Math.round((correct / total) * 100);
   const passed = pct >= 70;
 
@@ -2121,7 +2132,7 @@ function showResults() {
 
   document.getElementById('stat-correct').textContent = correct;
   document.getElementById('stat-wrong').textContent = wrong;
-  document.getElementById('stat-skipped').textContent = skippedUnanswered;
+  document.getElementById('stat-skipped').textContent = unanswered;
 
   // Build review
   const reviewEl = document.getElementById('review-list');
@@ -2132,10 +2143,10 @@ function showResults() {
   } else {
     reviewEl.innerHTML = wrongItems.map(({q, i, ans}) => `
       <div class="review-item">
-        <div class="review-q">${i+1}. ${q.q}</div>
+        <div class="review-q">${i+1}. ${escapeHtml(q.q)}</div>
         <div class="review-answers">
-          ${ans ? `<div class="review-wrong">✗ Tu respuesta: ${ans.selected}</div>` : '<div class="review-wrong">— Sin responder</div>'}
-          <div class="review-right">✓ Correcta: ${q.a}</div>
+          ${ans ? `<div class="review-wrong">✗ Tu respuesta: ${escapeHtml(ans.selected)}</div>` : '<div class="review-wrong">— Sin responder</div>'}
+          <div class="review-right">✓ Correcta: ${escapeHtml(q.a)}</div>
         </div>
       </div>
     `).join('');
